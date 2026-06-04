@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+  ::selection {
+    background: rgba(19, 51, 225, 0.4);
+    color: white;
+  }
+
+  input, select, textarea {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+  }
+
+  .glass-hover:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .glow-sapphire {
+    box-shadow: 0 0 20px rgba(51, 108, 255, 0.15), 0 0 60px rgba(51, 108, 255, 0.05);
+  }
+
+  .btn-primary {
+    @apply bg-sapphire-600 hover:bg-sapphire-700 text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white/5 hover:bg-white/10 text-white border border-white/10 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20 font-medium px-4 py-2.5 rounded-lg transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-noir-400 focus:outline-none focus:border-sapphire-500/50 focus:ring-1 focus:ring-sapphire-500/25 transition-all duration-200;
+  }
+
+  .card {
+    @apply glass rounded-xl p-6 transition-all duration-300;
+  }
+
+  .stat-card {
+    @apply card hover:glow-sapphire;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-emerald-500/15 text-emerald-400 border border-emerald-500/20;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-500/15 text-amber-400 border border-amber-500/20;
+  }
+
+  .badge-error {
+    @apply badge bg-red-500/15 text-red-400 border border-red-500/20;
+  }
+
+  .badge-info {
+    @apply badge bg-sapphire-500/15 text-sapphire-400 border border-sapphire-500/20;
+  }
+
+  .badge-neutral {
+    @apply badge bg-white/10 text-noir-300 border border-white/10;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
