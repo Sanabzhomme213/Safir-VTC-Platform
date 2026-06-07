@@ -457,7 +457,7 @@ export default function ReservationsPage() {
             {!settings.google_maps_key && form.departure && form.arrival && !routeLoading && (
               <p className="text-xs text-noir-500 flex items-center gap-1.5">
                 <AlertCircle className="w-3 h-3" />
-                Distance calculée via Nominatim + formule Haversine. Ajoutez une clé Google Maps dans Paramètres pour plus de précision.
+                Distance calculée automatiquement. Pour plus de précision, configurez votre clé Google Maps dans les Paramètres.
               </p>
             )}
           </div>

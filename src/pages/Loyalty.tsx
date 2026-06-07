@@ -87,16 +87,8 @@ export default function LoyaltyPage() {
       color: 'sapphire',
     },
   ]);
-  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([
-    { id: 'pc1', code: 'BIENVENUE10', discount_type: 'percent', discount_value: 10, max_uses: 100, current_uses: 23, valid_from: '2025-01-01', valid_to: '2025-12-31', active: true },
-    { id: 'pc2', code: 'ETE2025', discount_type: 'percent', discount_value: 15, max_uses: 50, current_uses: 8, valid_from: '2025-06-01', valid_to: '2025-08-31', active: true },
-    { id: 'pc3', code: 'PARRAIN20', discount_type: 'fixed', discount_value: 20, max_uses: 999, current_uses: 15, valid_from: '2025-01-01', valid_to: '2099-12-31', active: true },
-  ]);
-  const [clientsList] = useState<Client[]>([
-    { id: '1', name: 'Jean Dupont', email: 'jean.dupont@email.fr', loyalty_points: 5700, rides: 22, total_spent: 2850 },
-    { id: '2', name: 'Marie Laurent', email: 'marie.laurent@email.fr', loyalty_points: 1020, rides: 7, total_spent: 680 },
-    { id: '3', name: 'Lucas Moreau', email: 'lucas.moreau@email.fr', loyalty_points: 7000, rides: 30, total_spent: 3500 },
-  ]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [clientsList] = useState<Client[]>([]);
   const [editingTierId, setEditingTierId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<LoyaltyTier>>({});
   const [showPromoForm, setShowPromoForm] = useState(false);
@@ -107,37 +99,7 @@ export default function LoyaltyPage() {
   const [copiedReferralLink, setCopiedReferralLink] = useState<string | null>(
     null
   );
-  const [referrals] = useState<Referral[]>([
-    {
-      id: '1',
-      referrer_id: '1',
-      referrer_name: 'Alice Martin',
-      referee_id: '10',
-      referee_name: 'Bob Dupont',
-      status: 'completed',
-      created_date: new Date(Date.now() - 604800000).toISOString(),
-      completed_date: new Date(Date.now() - 172800000).toISOString(),
-    },
-    {
-      id: '2',
-      referrer_id: '2',
-      referrer_name: 'Jean Durand',
-      referee_id: '11',
-      referee_name: 'Marie Leclerc',
-      status: 'pending',
-      created_date: new Date(Date.now() - 259200000).toISOString(),
-    },
-    {
-      id: '3',
-      referrer_id: '3',
-      referrer_name: 'Sophie Bernard',
-      referee_id: '12',
-      referee_name: 'Pierre Moreau',
-      status: 'completed',
-      created_date: new Date(Date.now() - 1209600000).toISOString(),
-      completed_date: new Date(Date.now() - 864000000).toISOString(),
-    },
-  ]);
+  const [referrals] = useState<Referral[]>([]);
 
   const getTierColor = (color: string) => {
     switch (color) {
@@ -461,7 +423,13 @@ export default function LoyaltyPage() {
                 Clients les plus fidèles
               </h3>
               <div className="space-y-3">
-                {topLoyalClients.map((client, index) => {
+                {topLoyalClients.length === 0 ? (
+                  <div className="text-center py-8 text-noir-400 text-sm">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p>Aucun client fidèle pour le moment.</p>
+                    <p className="text-xs mt-1">Les clients apparaîtront ici après leurs premières réservations.</p>
+                  </div>
+                ) : topLoyalClients.map((client, index) => {
                   const tier = getClientTier(client);
                   return (
                     <div
@@ -530,6 +498,9 @@ export default function LoyaltyPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {promoCodes.length === 0 && (
+                      <tr><td colSpan={5} className="px-6 py-10 text-center text-noir-400 text-sm">Aucun code promo. Créez-en un pour vos clients.</td></tr>
+                    )}
                     {promoCodes.map((promo) => (
                       <tr
                         key={promo.id}

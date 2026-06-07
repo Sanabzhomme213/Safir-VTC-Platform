@@ -1,41 +1,9 @@
 ﻿import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle, Circle, Power, MessageSquare, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, Circle, Power, MessageSquare, AlertCircle, X } from 'lucide-react';
 import { GoogleBusinessPost, formatDate } from '../lib/supabase';
 
 export default function GoogleBusinessPage() {
-  const [posts, setPosts] = useState<GoogleBusinessPost[]>([
-    {
-      id: 'gb1',
-      title: 'Nouveau service de transfert express',
-      content:
-        'Découvrez notre nouveau service de transfert express avec chauffeur professionnel. Disponible 24h/24, 7j/7.',
-      post_type: 'update',
-      media_url: null,
-      status: 'published',
-      published_at: '2025-06-02T10:00:00Z',
-      created_at: '2025-06-02T10:00:00Z',
-    },
-    {
-      id: 'gb2',
-      title: 'Promotion été : -15% sur tous les transferts',
-      content: 'Profitez de l\'été avec -15% de réduction sur tous nos transferts VTC. Code promo: ETE2025',
-      post_type: 'offer',
-      media_url: null,
-      status: 'published',
-      published_at: '2025-06-01T14:00:00Z',
-      created_at: '2025-06-01T14:00:00Z',
-    },
-    {
-      id: 'gb3',
-      title: 'Événement : Journée portes ouvertes',
-      content: 'Visitez nos locaux le 15 juin pour découvrir nos véhicules et nos services. Entrée gratuite.',
-      post_type: 'event',
-      media_url: null,
-      status: 'draft',
-      published_at: null,
-      created_at: '2025-06-03T16:00:00Z',
-    },
-  ]);
+  const [posts, setPosts] = useState<GoogleBusinessPost[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<GoogleBusinessPost>>({
@@ -50,6 +18,7 @@ export default function GoogleBusinessPage() {
   );
   const [autoPost, setAutoPost] = useState(false);
   const [autoReview, setAutoReview] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const stats = {
     total: posts.length,
@@ -65,9 +34,10 @@ export default function GoogleBusinessPage() {
 
   const handleSave = () => {
     if (!formData.title || !formData.content) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      setFormError('Veuillez remplir le titre et le contenu.');
       return;
     }
+    setFormError('');
 
     if (editingId) {
       setPosts(
@@ -103,6 +73,7 @@ export default function GoogleBusinessPage() {
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
+    setFormError('');
     setFormData({
       title: '',
       content: '',
@@ -159,14 +130,14 @@ export default function GoogleBusinessPage() {
             <div className="text-sm text-amber-300 mb-1">Brouillons</div>
             <div className="text-3xl font-bold text-amber-400">{stats.drafts}</div>
           </div>
-          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 backdrop-blur flex items-center justify-between">
+          <div className="bg-sapphire-500/10 border border-sapphire-500/30 rounded-xl p-4 backdrop-blur flex items-center justify-between">
             <div>
-              <div className="text-sm text-cyan-300 mb-1">Connexion</div>
-              <div className="text-xs text-gray-400">Status API</div>
+              <div className="text-sm text-sapphire-300 mb-1">Automatisation</div>
+              <div className="text-xs text-gray-400">Email demande d'avis</div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-emerald-400">Connecté</span>
+              <div className={`w-3 h-3 rounded-full ${autoReview ? 'bg-emerald-500 animate-pulse' : 'bg-gray-600'}`}></div>
+              <span className={`text-sm ${autoReview ? 'text-emerald-400' : 'text-gray-500'}`}>{autoReview ? 'Activée' : 'Désactivée'}</span>
             </div>
           </div>
         </div>
@@ -182,6 +153,18 @@ export default function GoogleBusinessPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {posts.length === 0 && (
+            <div className="col-span-3 flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-sapphire-500/10 border border-sapphire-500/20 flex items-center justify-center mb-4">
+                <MessageSquare size={28} className="text-sapphire-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Aucune publication</h3>
+              <p className="text-noir-400 text-sm max-w-xs">Créez votre première publication pour booster votre visibilité sur Google.</p>
+              <button onClick={() => setShowForm(true)} className="mt-4 flex items-center gap-2 bg-sapphire-600 hover:bg-sapphire-700 px-5 py-2.5 rounded-lg font-semibold transition text-sm">
+                <Plus size={16} /> Créer une publication
+              </button>
+            </div>
+          )}
           {posts.map((post) => (
             <div
               key={post.id}
@@ -399,7 +382,13 @@ export default function GoogleBusinessPage() {
                 />
               </div>
 
-              <div className="flex gap-3 pt-6">
+              {formError && (
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                  <AlertCircle size={14} /> {formError}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleSave}
                   className="flex-1 bg-sapphire-600 hover:bg-sapphire-700 px-4 py-2 rounded-lg font-semibold transition"

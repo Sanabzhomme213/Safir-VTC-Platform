@@ -39,7 +39,10 @@ export default function ConciergePage() {
       : offers.filter((o) => o.offer_type === selectedFilter);
 
   const activeOffers = offers.filter((o) => o.is_active).length;
-  const monthlyCommission = 2847; // Mock value
+  const avgCommission = activeOffers > 0
+    ? Math.round(offers.filter(o => o.is_active).reduce((s, o) => s + (o.commission_percent ?? 0), 0) / activeOffers)
+    : 0;
+  const monthlyCommission = 0; // Calculé depuis les transactions réelles
 
   const getOfferIcon = (type: OfferType) => {
     switch (type) {
@@ -153,9 +156,10 @@ export default function ConciergePage() {
         <div className="mb-8 backdrop-blur-xl bg-white/5 border border-sapphire-500/30 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp className="w-6 h-6 text-sapphire-400" />
-            <p className="text-sapphire-300 font-semibold">Revenus estimés ce mois</p>
+            <p className="text-sapphire-300 font-semibold">Commissions ce mois</p>
           </div>
           <p className="text-4xl font-bold text-white">{monthlyCommission}€</p>
+          <p className="text-xs text-noir-500 mt-1">{activeOffers > 0 ? `${activeOffers} offre${activeOffers > 1 ? 's' : ''} active${activeOffers > 1 ? 's' : ''} · commission moyenne ${avgCommission}%` : 'Aucune offre active'}</p>
         </div>
 
         {/* Filter and Add Button */}
@@ -350,7 +354,7 @@ export default function ConciergePage() {
               </p>
             </div>
             <div className="bg-noir-800 rounded-lg p-4">
-              <p className="text-sapphire-300 text-xs mb-1">Ce mois</p>
+              <p className="text-sapphire-300 text-xs mb-1">Commissions ce mois</p>
               <p className="text-2xl font-bold text-green-400">{monthlyCommission}€</p>
             </div>
           </div>
