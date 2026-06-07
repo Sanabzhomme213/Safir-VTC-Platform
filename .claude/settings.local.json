@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Users\\\\Samya\\\\OneDrive\\\\Desktop\\\\Safir-VTC-Platform-main\\\\supabase\\\\functions\\\\ai-chat\")",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Users\\\\Samya\\\\OneDrive\\\\Desktop\\\\Safir-VTC-Platform-main\\\\supabase\\\\functions\\\\send-email\")"
+    ]
+  }
+}
