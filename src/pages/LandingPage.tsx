@@ -178,9 +178,9 @@ export default function LandingPage() {
         {/* Background */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/tesla-hero.jpg"
+            src="/tesla-avant.png"
             alt="Tesla noire L'Ambassadeur des VTC"
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover opacity-40"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-noir-950/60 via-noir-950/40 to-noir-950" />
           <div className="absolute inset-0 bg-gradient-to-r from-noir-950/80 to-transparent" />
@@ -470,7 +470,7 @@ export default function LandingPage() {
 
             <div className="relative">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden">
-                <img src="/tesla-chauffeur.jpg" alt="Tesla L'Ambassadeur des VTC" className="w-full h-full object-cover opacity-90" />
+                <img src="/tesla-dos.png" alt="Tesla L'Ambassadeur des VTC" className="w-full h-full object-cover opacity-95" />
                 <div className="absolute inset-0 bg-gradient-to-t from-noir-950/60 to-transparent" />
               </div>
               <div className="absolute -bottom-5 -left-5 glass rounded-xl p-4 shadow-2xl">
@@ -593,7 +593,7 @@ export default function LandingPage() {
 
           <div className="max-w-2xl mx-auto">
             {[
-              { name: 'Tesla Model Y', model: '2026 — Noir Minuit', seats: 4, luggage: 4, img: '/tesla-card.jpg', features: ['100% électrique', 'Silencieux', 'Climatisation auto', 'Chargeur USB-C', 'Eau minérale', 'Autopilot'] },
+              { name: 'Tesla Model Y', model: '2026 — Noir Minuit', seats: 4, luggage: 4, img: '/tesla-avant.png', features: ['100% électrique', 'Silencieux', 'Climatisation auto', 'Chargeur USB-C', 'Eau minérale', 'Autopilot'] },
             ].map((v) => (
               <div key={v.name} className="glass rounded-2xl overflow-hidden group">
                 <div className="aspect-[16/9] overflow-hidden">
