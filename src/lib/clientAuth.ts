@@ -18,11 +18,14 @@ export async function getClientSession(): Promise<ClientSession | null> {
   };
 }
 
+const APP_URL = (import.meta.env.VITE_APP_URL as string) || 'https://ambassadeur-des-vtc.fr';
+
 export async function sendMagicLink(email: string): Promise<{ ok: boolean; error?: string }> {
+  const origin = window.location.hostname === 'localhost' ? APP_URL : window.location.origin;
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${window.location.origin}/#/client/dashboard`,
+      emailRedirectTo: `${origin}/#/client/dashboard`,
     },
   });
   if (error) return { ok: false, error: error.message };
