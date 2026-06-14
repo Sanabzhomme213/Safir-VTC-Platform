@@ -18,7 +18,7 @@ function loadPublicSettings() {
 }
 
 const _s = loadPublicSettings();
-const PHONE = (_s.company_phone && _s.company_phone !== '+33 6 00 00 00 00') ? _s.company_phone : '+33 6 XX XX XX XX';
+const PHONE = _s.company_phone || '+33 6 33 82 83 94';
 const EMAIL = _s.company_email || 'contact@ambassadeur-vtc.fr';
 const GOOGLE_REVIEW_URL = _s.google_review_url || 'https://www.google.com/maps/search/?api=1&query=vtc+var+ambassadeur';
 
