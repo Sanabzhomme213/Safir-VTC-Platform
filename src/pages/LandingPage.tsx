@@ -47,7 +47,7 @@ const reviews = [
 
 const faqs = [
   { q: 'Comment réserver un VTC ?', a: 'Utilisez notre formulaire en ligne, appelez-nous ou envoyez un message. Vous recevez une confirmation instantanée par email avec votre numéro de réservation unique.' },
-  { q: 'Quels types de véhicules proposez-vous ?', a: 'Nous disposons d\'une Tesla Model 3 2022 noire, berline électrique premium 4 places. Silencieuse, confortable, climatisée, avec chargeur USB-C à bord.' },
+  { q: 'Quels types de véhicules proposez-vous ?', a: 'Nous disposons d\'une Tesla Model Y 2026 noire, SUV électrique premium 5 places. Silencieux, confortable, climatisé, avec chargeur USB-C à bord.' },
   { q: 'Suivez-vous les vols en cas de retard ?', a: 'Oui, nous suivons tous les vols en temps réel. En cas de retard, votre chauffeur ajuste automatiquement l\'heure de prise en charge sans frais supplémentaires.' },
   { q: 'Quels modes de paiement acceptez-vous ?', a: 'Carte bancaire, Apple Pay, Google Pay. Un acompte de 20% est demandé à la réservation, le solde est réglé après la course.' },
   { q: 'Proposez-vous des tarifs pour les entreprises ?', a: 'Oui, nous proposons des contrats corporate avec facturation mensuelle, tarifs préférentiels et gestion centralisée des courses.' },
@@ -136,7 +136,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-sapphire-600 flex items-center justify-center">
               <Car className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-white text-lg tracking-tight">Safir <span className="text-sapphire-400">VTC</span></span>
+            <span className="font-bold text-white text-lg tracking-tight">L'Ambassadeur <span className="text-sapphire-400">des VTC</span></span>
           </a>
 
           <div className="hidden lg:flex items-center gap-8">
@@ -203,7 +203,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-lg md:text-xl text-noir-300 mb-8 max-w-xl leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Transferts aéroport (Nice, Toulon, Marseille), gare, corporate. Tesla Model 3 premium, chauffeur professionnel. Réservation instantanée.
+              Transferts aéroport (Nice, Toulon, Marseille), gare, corporate. Tesla Model Y 2026, chauffeur professionnel. Réservation instantanée.
             </p>
 
             <div className="flex flex-wrap gap-4 mb-12 animate-slide-up" style={{ animationDelay: '0.2s' }}>
@@ -242,7 +242,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 { value: '4.9/5', label: 'Note Google', sub: '+200 avis' },
-                { value: '2000+', label: 'Trajets réalisés', sub: 'Depuis 2022' },
+                { value: '2000+', label: 'Trajets réalisés', sub: 'Service premium' },
                 { value: '100%', label: 'Ponctualité', sub: 'Garantie' },
                 { value: '24/7', label: 'Disponibilité', sub: 'Toujours là' },
               ].map((s) => (
@@ -446,13 +446,13 @@ export default function LandingPage() {
             <div>
               <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Pourquoi L'Ambassadeur des VTC ?</span>
               <h2 className="text-3xl lg:text-4xl font-bold mb-6">L'excellence comme standard</h2>
-              <p className="text-noir-400 mb-8 leading-relaxed">L'Ambassadeur des VTC, c'est la promesse d'un service VTC premium dans le Var et sur la Côte d'Azur. À bord d'une Tesla Model 3 noire 2022, profitez d'un trajet silencieux, confortable et éco-responsable avec un chauffeur professionnel dédié.</p>
+              <p className="text-noir-400 mb-8 leading-relaxed">L'Ambassadeur des VTC, c'est la promesse d'un service VTC premium dans le Var et sur la Côte d'Azur. À bord d'une Tesla Model Y 2026, profitez d'un trajet silencieux, confortable et éco-responsable avec un chauffeur professionnel dédié.</p>
 
               <div className="space-y-4">
                 {[
                   { icon: Plane, title: 'Suivi des vols en temps réel', desc: 'Votre chauffeur s\'adapte automatiquement aux retards et modifications de vol.' },
                   { icon: Clock, title: 'Ponctualité garantie', desc: 'Nous nous engageons sur l\'heure de prise en charge. Toujours à l\'heure.' },
-                  { icon: Shield, title: 'Tesla Model 3 assurée tous risques', desc: 'Berline électrique 2022, noire, entretenue et assurée. Zéro émission, confort maximal.' },
+                  { icon: Shield, title: 'Tesla Model Y 2026 assurée tous risques', desc: 'SUV électrique 2026, noir, entretenu et assuré. Zéro émission, confort maximal.' },
                   { icon: MessageCircle, title: 'Support 24h/24', desc: 'Notre équipe est joignable à tout moment par téléphone ou email.' },
                 ].map(({ icon: Icon, title, desc }) => (
                   <div key={title} className="flex gap-4">
@@ -587,13 +587,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="text-center mb-14">
             <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Notre véhicule</span>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">Tesla Model 3 — Noir Minuit</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold mb-4">Tesla Model Y 2026 — Noir Minuit</h2>
             <p className="text-noir-400">Une berline électrique premium pour un trajet silencieux, confortable et éco-responsable</p>
           </div>
 
           <div className="max-w-2xl mx-auto">
             {[
-              { name: 'Tesla Model 3', model: '2022 — Noir Minuit', seats: 3, luggage: 3, img: 'https://images.pexels.com/photos/13861/IMG_3496bfotografias.jpg', features: ['100% électrique', 'Silencieux', 'Climatisation auto', 'Chargeur USB-C', 'Eau minérale', 'Autopilot'] },
+              { name: 'Tesla Model Y', model: '2026 — Noir Minuit', seats: 4, luggage: 4, img: 'https://images.pexels.com/photos/13861/IMG_3496bfotografias.jpg', features: ['100% électrique', 'Silencieux', 'Climatisation auto', 'Chargeur USB-C', 'Eau minérale', 'Autopilot'] },
             ].map((v) => (
               <div key={v.name} className="glass rounded-2xl overflow-hidden group">
                 <div className="aspect-[16/9] overflow-hidden">
@@ -677,7 +677,7 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-sapphire-600 flex items-center justify-center"><Car className="w-4 h-4 text-white" /></div>
-                <span className="font-bold text-white">Safir <span className="text-sapphire-400">VTC</span></span>
+                <span className="font-bold text-white">L'Ambassadeur <span className="text-sapphire-400">des VTC</span></span>
               </div>
               <p className="text-sm text-noir-500 mb-4 leading-relaxed">Service de chauffeur privé premium dans le Var et sur la Côte d'Azur. Disponible 24h/24.</p>
               <div className="flex gap-3">
