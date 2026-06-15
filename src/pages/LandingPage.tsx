@@ -80,8 +80,10 @@ export default function LandingPage() {
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({
     departure: '', arrival: '', date: '', time: '', passengers: 1, luggage: 0, type: 'one_way',
-    returnDate: '', returnTime: '',
+    returnDate: '', returnTime: '', flightNumber: '',
   });
+
+  const isAirport = /a[ée]roport|airport|aéro|\bNCE\b|\bTLN\b|\bMRS\b|\bCDG\b|\bORY\b|\bLYS\b|\bNTE\b|\bBOD\b/i.test(form.departure + ' ' + form.arrival);
   const [coords, setCoords] = useState<{ dep: AddressResult | null; arr: AddressResult | null }>({ dep: null, arr: null });
   const [priceEstimate, setPriceEstimate] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
@@ -150,6 +152,7 @@ export default function LandingPage() {
       depLng: coords.dep?.lng ?? null,
       arrLat: coords.arr?.lat ?? null,
       arrLng: coords.arr?.lng ?? null,
+      flightNumber: form.flightNumber || null,
       isQuote,
     }));
     window.location.href = '/#/client/login';
@@ -496,6 +499,25 @@ export default function LandingPage() {
                         >+</button>
                       </div>
                     </div>
+
+                    {/* Flight number — shown when an airport is detected */}
+                    {isAirport && (
+                      <div className="rounded-xl bg-sapphire-600/5 border border-sapphire-500/20 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Plane className="w-4 h-4 text-sapphire-400" />
+                          <label className="text-xs font-semibold text-sapphire-300 uppercase tracking-wide">Transfert aéroport détecté</label>
+                        </div>
+                        <p className="text-xs text-noir-400 mb-3">Votre numéro de vol permet au chauffeur de suivre les retards en temps réel.</p>
+                        <input
+                          type="text"
+                          value={form.flightNumber}
+                          onChange={e => setForm(f => ({ ...f, flightNumber: e.target.value.toUpperCase() }))}
+                          placeholder="Ex : AF1234, EZY3321, FR7788..."
+                          className="input-field uppercase tracking-widest font-mono text-sm"
+                          maxLength={8}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-3 mt-6">
@@ -540,6 +562,15 @@ export default function LandingPage() {
                         <p className="text-sm text-white font-medium">{form.passengers} passager{form.passengers > 1 ? 's' : ''} · {form.luggage} bagage{form.luggage > 1 ? 's' : ''}</p>
                       </div>
                     </div>
+                    {form.flightNumber && (
+                      <div className="px-4 py-3 flex items-center gap-3">
+                        <Plane className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-noir-500 mb-0.5">Numéro de vol</p>
+                          <p className="text-sm text-white font-mono font-bold">{form.flightNumber}</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="px-4 py-3 flex items-center gap-3">
                       <Car className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
                       <div>

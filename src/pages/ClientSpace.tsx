@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { formatCurrency, formatDate, reservationStatusLabel, reservationStatusColor, generateBookingNumber } from '../lib/supabase';
 import type { Reservation, Client } from '../lib/supabase';
 import { clientSignOut, ensureClientRecord } from '../lib/clientAuth';
+import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
 
 export default function ClientSpacePage() {
   const [session, setSession] = useState<{ id: string; email?: string; phone?: string } | null | 'loading'>('loading');
@@ -73,7 +74,7 @@ export default function ClientSpacePage() {
                 status: 'pending' as const,
                 is_quote: pending.isQuote ?? false,
                 notes: '',
-                flight_number: null,
+                flight_number: pending.flightNumber ?? null,
                 flight_status: null,
                 return_date: pending.returnDate ?? null,
                 return_time: pending.returnTime ?? null,
@@ -83,6 +84,28 @@ export default function ClientSpacePage() {
                 setReservations(prev => [created, ...prev]);
                 setBookingCreated(true);
                 setActiveTab('reservations');
+
+                // Send confirmation email
+                if (clientData.email) {
+                  try {
+                    const settings = JSON.parse(localStorage.getItem('ambassadeur_settings') ?? '{}');
+                    const html = buildConfirmationEmail({
+                      clientName: [clientData.first_name, clientData.last_name].filter(Boolean).join(' ') || clientData.email,
+                      bookingNumber: created.booking_number,
+                      date: created.ride_date,
+                      time: created.ride_time,
+                      from: created.departure_address,
+                      to: created.arrival_address,
+                      amount: `${created.total_price}€`,
+                      companyName: settings.company_name || "L'Ambassadeur des VTC",
+                      companyPhone: settings.company_phone || '+33 6 33 82 83 94',
+                    });
+                    await sendEmail(
+                      { to: clientData.email, subject: `Confirmation réservation ${created.booking_number}`, html },
+                      import.meta.env.VITE_SUPABASE_URL as string ?? '',
+                    );
+                  } catch {}
+                }
               }
             } catch {}
           }

@@ -18,16 +18,30 @@ interface Props {
 
 async function searchNominatim(query: string): Promise<AddressResult[]> {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&countrycodes=fr,mc&accept-language=fr&addressdetails=1`;
+    // viewbox biases results towards Var & Côte d'Azur (lon 4.5–8.0, lat 42.8–44.5)
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=fr,mc&accept-language=fr&addressdetails=1&viewbox=4.5,44.5,8.0,42.8&bounded=0`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'AmbassadeurVTC/1.0 contact@ambassadeur-vtc.fr' },
     });
     const data = await res.json();
-    return data.map((d: Record<string, string>) => ({
-      label: d.display_name,
-      lat: parseFloat(d.lat),
-      lng: parseFloat(d.lon),
-    }));
+    return data.map((d: Record<string, string | Record<string, string>>) => {
+      const addr = d.address as Record<string, string> | undefined;
+      // Build a precise label: house number + road + city + postcode
+      let label = d.display_name as string;
+      if (addr) {
+        const parts: string[] = [];
+        const street = [addr.house_number, addr.road].filter(Boolean).join(' ');
+        if (street) parts.push(street);
+        const city = addr.city || addr.town || addr.village || addr.municipality || '';
+        if (city) parts.push(city);
+        const postcode = addr.postcode || '';
+        if (postcode) parts.push(postcode);
+        const dept = addr.county || addr.state_district || '';
+        if (dept && !city.toLowerCase().includes(dept.toLowerCase())) parts.push(dept);
+        if (parts.length >= 2) label = parts.join(', ');
+      }
+      return { label, lat: parseFloat(d.lat as string), lng: parseFloat(d.lon as string) };
+    });
   } catch {
     return [];
   }
