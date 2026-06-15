@@ -207,14 +207,15 @@ export default function BookingSection({ onScrollRequest }: Props) {
 
         {/* STEP 1 — Votre trajet */}
         {wizardStep === 1 && (
-          <div className="flex-1 flex flex-col">
+          <div key="step1" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Votre trajet</h3>
 
             <div className="flex gap-1.5 mb-6 p-1 bg-white/5 rounded-xl">
-              {([['one_way', 'Aller simple'], ['round_trip', 'Aller-retour'], ['disposal', 'Mise à disposition']] as const).map(([val, label]) => (
+              {([['one_way', 'Aller', 'Aller simple'], ['round_trip', 'A/R', 'Aller-retour'], ['disposal', 'Dispo.', 'Mise à dispo']] as const).map(([val, shortLabel, fullLabel]) => (
                 <button key={val} onClick={() => setForm(f => ({ ...f, type: val }))}
-                  className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${form.type === val ? 'bg-sapphire-600 text-white' : 'text-noir-400 hover:text-white'}`}>
-                  {label}
+                  className={`flex-1 py-2.5 px-1.5 rounded-lg text-xs font-medium transition-all ${form.type === val ? 'bg-sapphire-600 text-white' : 'text-noir-400 hover:text-white'}`}>
+                  <span className="hidden xs:inline">{fullLabel}</span>
+                  <span className="xs:hidden">{shortLabel}</span>
                 </button>
               ))}
             </div>
@@ -260,7 +261,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
 
         {/* STEP 2 — Quand ? */}
         {wizardStep === 2 && (
-          <div className="flex-1 flex flex-col">
+          <div key="step2" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Quand ?</h3>
 
             <div className="space-y-4">
@@ -360,7 +361,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
 
         {/* STEP 3 — Récapitulatif */}
         {wizardStep === 3 && (
-          <div className="flex-1 flex flex-col">
+          <div key="step3" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Récapitulatif</h3>
 
             <div className="rounded-xl bg-white/[0.03] border border-white/8 divide-y divide-white/5 mb-5">

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Car, MapPin, Star, Phone, ArrowRight, ChevronDown,
@@ -63,6 +63,52 @@ function StarRating({ n }: { n: number }) {
       ))}
     </div>
   );
+}
+
+function useInView(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setInView(true); obs.disconnect(); }
+    }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+}
+
+function FadeIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const { ref, inView } = useInView();
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function AnimatedNumber({ target, suffix = '', prefix = '' }: { target: number; suffix?: string; prefix?: string }) {
+  const [count, setCount] = useState(0);
+  const { ref, inView } = useInView(0.3);
+  useEffect(() => {
+    if (!inView) return;
+    const duration = 1400;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [inView, target]);
+  return <span ref={ref}>{prefix}{count}{suffix}</span>;
 }
 
 export default function LandingPage() {
@@ -195,18 +241,26 @@ export default function LandingPage() {
         <div className="relative z-10 border-t border-white/5 bg-white/[0.02] backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {[
-                { value: '4.9/5', label: 'Note Google', sub: '+200 avis' },
-                { value: '2000+', label: 'Trajets', sub: 'Service premium' },
-                { value: '100%', label: 'Ponctualité', sub: 'Garantie' },
-                { value: '24/7', label: 'Disponible', sub: 'Toujours là' },
-              ].map((s) => (
-                <div key={s.label} className="text-center">
-                  <div className="text-xl md:text-3xl font-black text-white">{s.value}</div>
-                  <div className="text-xs md:text-sm font-semibold text-noir-300 mt-0.5">{s.label}</div>
-                  <div className="text-[10px] md:text-xs text-noir-500">{s.sub}</div>
-                </div>
-              ))}
+              <div className="text-center">
+                <div className="text-xl md:text-3xl font-black text-white">4.9/5</div>
+                <div className="text-xs md:text-sm font-semibold text-noir-300 mt-0.5">Note Google</div>
+                <div className="text-[10px] md:text-xs text-noir-500">+200 avis</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl md:text-3xl font-black text-white"><AnimatedNumber target={2000} suffix="+" /></div>
+                <div className="text-xs md:text-sm font-semibold text-noir-300 mt-0.5">Trajets</div>
+                <div className="text-[10px] md:text-xs text-noir-500">Service premium</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl md:text-3xl font-black text-white"><AnimatedNumber target={100} suffix="%" /></div>
+                <div className="text-xs md:text-sm font-semibold text-noir-300 mt-0.5">Ponctualité</div>
+                <div className="text-[10px] md:text-xs text-noir-500">Garantie</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl md:text-3xl font-black text-white">24/7</div>
+                <div className="text-xs md:text-sm font-semibold text-noir-300 mt-0.5">Disponible</div>
+                <div className="text-[10px] md:text-xs text-noir-500">Toujours là</div>
+              </div>
             </div>
           </div>
         </div>
@@ -238,22 +292,24 @@ export default function LandingPage() {
       {/* SERVICES */}
       <section id="services" className="py-20 lg:py-28 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-14">
+          <FadeIn className="text-center mb-14">
             <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Nos services</span>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">Une solution pour chaque besoin</h2>
             <p className="text-noir-400 max-w-xl mx-auto">Du simple transfert aéroport au voyage longue distance, nous couvrons tous vos déplacements.</p>
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {services.map((s) => (
-              <div key={s.label} className="glass rounded-xl p-6 hover:glow-sapphire transition-all duration-300 group">
-                <div className="w-12 h-12 rounded-xl bg-sapphire-600/15 flex items-center justify-center mb-4 group-hover:bg-sapphire-600/25 transition-colors">
-                  <s.icon className="w-6 h-6 text-sapphire-400" />
+            {services.map((s, i) => (
+              <FadeIn key={s.label} delay={i * 80}>
+                <div className="glass rounded-xl p-6 hover:glow-sapphire transition-all duration-300 group h-full">
+                  <div className="w-12 h-12 rounded-xl bg-sapphire-600/15 flex items-center justify-center mb-4 group-hover:bg-sapphire-600/25 transition-colors">
+                    <s.icon className="w-6 h-6 text-sapphire-400" />
+                  </div>
+                  <h3 className="text-base font-semibold mb-2">{s.label}</h3>
+                  <p className="text-sm text-noir-400 mb-4 leading-relaxed">{s.desc}</p>
+                  <div className="text-sapphire-400 font-semibold text-sm">{s.price}</div>
                 </div>
-                <h3 className="text-base font-semibold mb-2">{s.label}</h3>
-                <p className="text-sm text-noir-400 mb-4 leading-relaxed">{s.desc}</p>
-                <div className="text-sapphire-400 font-semibold text-sm">{s.price}</div>
-              </div>
+              </FadeIn>
             ))}
           </div>
         </div>
@@ -263,7 +319,7 @@ export default function LandingPage() {
       <section className="py-20 lg:py-28 border-t border-white/5 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div>
+            <FadeIn>
               <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Pourquoi L'Ambassadeur des VTC ?</span>
               <h2 className="text-3xl lg:text-4xl font-bold mb-6">L'excellence comme standard</h2>
               <p className="text-noir-400 mb-8 leading-relaxed">L'Ambassadeur des VTC, c'est la promesse d'un service VTC premium dans le Var et sur la Côte d'Azur. À bord d'une Tesla Model Y 2026, profitez d'un trajet silencieux, confortable et éco-responsable avec un chauffeur professionnel dédié.</p>
@@ -286,9 +342,9 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </FadeIn>
 
-            <div className="relative">
+            <FadeIn delay={150} className="relative">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <img src="/tesla-dos.png" alt="Tesla L'Ambassadeur des VTC" className="w-full h-full object-cover opacity-95" />
                 <div className="absolute inset-0 bg-gradient-to-t from-noir-950/60 to-transparent" />
@@ -315,7 +371,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -323,16 +379,17 @@ export default function LandingPage() {
       {/* DESTINATIONS */}
       <section id="destinations" className="py-20 lg:py-28 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-14">
+          <FadeIn className="text-center mb-14">
             <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Destinations populaires</span>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">Trajets les plus demandés</h2>
             <p className="text-noir-400">Tarifs fixes, aucune surprise. Réservez en toute confiance.</p>
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {destinations.map((d) => (
-              <button key={`${d.from}-${d.to}`} onClick={() => scrollTo('booking')}
-                className="glass rounded-xl p-5 text-left hover:glow-sapphire transition-all duration-300 group">
+            {destinations.map((d, i) => (
+              <FadeIn key={`${d.from}-${d.to}`} delay={i * 60}>
+              <button onClick={() => scrollTo('booking')}
+                className="glass rounded-xl p-5 text-left hover:glow-sapphire transition-all duration-300 group w-full">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm">
@@ -351,6 +408,7 @@ export default function LandingPage() {
                   Réserver ce trajet <ArrowRight className="w-3 h-3" />
                 </p>
               </button>
+              </FadeIn>
             ))}
           </div>
 
@@ -364,7 +422,7 @@ export default function LandingPage() {
       {/* REVIEWS */}
       <section id="reviews" className="py-20 lg:py-28 border-t border-white/5 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-14">
+          <FadeIn className="text-center mb-14">
             <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Avis clients</span>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">Ce que disent nos clients</h2>
             <div className="flex items-center justify-center gap-3">
@@ -372,11 +430,12 @@ export default function LandingPage() {
               <span className="text-xl font-bold">4.9 / 5</span>
               <span className="text-noir-400 text-sm">sur Google (+200 avis)</span>
             </div>
-          </div>
+          </FadeIn>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {reviews.map((r) => (
-              <div key={r.name} className="glass rounded-xl p-5">
+            {reviews.map((r, i) => (
+              <FadeIn key={r.name} delay={i * 80}>
+              <div className="glass rounded-xl p-5 h-full">
                 <StarRating n={r.rating} />
                 <p className="mt-3 text-sm text-noir-300 leading-relaxed">"{r.text}"</p>
                 <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
@@ -391,6 +450,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
+              </FadeIn>
             ))}
           </div>
 
@@ -446,14 +506,15 @@ export default function LandingPage() {
       {/* FAQ */}
       <section id="faq" className="py-20 lg:py-28 border-t border-white/5 bg-white/[0.01]">
         <div className="max-w-3xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-14">
+          <FadeIn className="text-center mb-14">
             <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">FAQ</span>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">Questions fréquentes</h2>
-          </div>
+          </FadeIn>
 
           <div className="space-y-3">
             {faqs.map((f, i) => (
-              <div key={i} className="glass rounded-xl overflow-hidden">
+              <FadeIn key={i} delay={i * 50}>
+              <div className="glass rounded-xl overflow-hidden">
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.02] transition">
                   <span className="font-medium text-sm pr-4">{f.q}</span>
@@ -465,6 +526,7 @@ export default function LandingPage() {
                   </div>
                 )}
               </div>
+              </FadeIn>
             ))}
           </div>
         </div>
