@@ -6,6 +6,7 @@ import { formatCurrency, formatDate, reservationStatusLabel, reservationStatusCo
 import type { Reservation, Client } from '../lib/supabase';
 import { clientSignOut, ensureClientRecord } from '../lib/clientAuth';
 import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
+import { notifyReservationCreated } from '../lib/smsService';
 
 export default function ClientSpacePage() {
   const [session, setSession] = useState<{ id: string; email?: string; phone?: string } | null | 'loading'>('loading');
@@ -106,6 +107,17 @@ export default function ClientSpacePage() {
                     );
                   } catch {}
                 }
+
+                // Send SMS confirmation
+                try {
+                  const settings = JSON.parse(localStorage.getItem('ambassadeur_settings') ?? '{}');
+                  await notifyReservationCreated(
+                    created,
+                    clientData,
+                    settings.company_name || "L'Ambassadeur des VTC",
+                    settings.company_phone || '+33 6 33 82 83 94',
+                  );
+                } catch {}
               }
             } catch {}
           }
