@@ -134,7 +134,7 @@ export default function LandingPage() {
   };
 
   const handleBook = (isQuote = false) => {
-    sessionStorage.setItem('pending_booking', JSON.stringify({
+    localStorage.setItem('pending_booking', JSON.stringify({
       departure: form.departure,
       arrival: form.arrival,
       date: form.date,

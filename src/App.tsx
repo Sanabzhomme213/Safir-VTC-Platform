@@ -1,4 +1,4 @@
-﻿import React, { useState, createContext, useContext } from 'react';
+﻿import React, { useState, createContext, useContext, useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, Car, Users, FileText, Search, Bot, Mail, Globe,
@@ -27,6 +27,7 @@ import ClientSpacePage from './pages/ClientSpace';
 
 import { isAuthenticated, logout } from './lib/auth';
 import { DataProvider } from './lib/DataContext';
+import { supabase } from './lib/supabase';
 
 type NavItem = { icon: React.ElementType; label: string; path: string };
 
@@ -219,6 +220,18 @@ function AdminLayout({ onLogout }: { onLogout: () => void }) {
 
 export default function App() {
   const [authed, setAuthed] = useState(isAuthenticated);
+
+  // Supabase magic link puts tokens in the URL hash (#access_token=...).
+  // HashRouter reads the hash as a route path → no match → landing page.
+  // Detect auth tokens here and redirect to the client dashboard instead.
+  useEffect(() => {
+    const h = window.location.hash;
+    if (h.includes('access_token=') && (h.includes('type=magiclink') || h.includes('type=signup') || h.includes('type=recovery'))) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.replace('/#/client/dashboard');
+      });
+    }
+  }, []);
 
   // Client routes are always accessible (independent auth)
   return (

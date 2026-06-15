@@ -45,11 +45,11 @@ export default function ClientSpacePage() {
           setReservations(resData ?? []);
 
           // Handle pending booking from landing page
-          const pendingRaw = sessionStorage.getItem('pending_booking');
+          const pendingRaw = localStorage.getItem('pending_booking');
           if (pendingRaw && clientData) {
             try {
               const pending = JSON.parse(pendingRaw);
-              sessionStorage.removeItem('pending_booking');
+              localStorage.removeItem('pending_booking');
               const newRes = {
                 booking_number: generateBookingNumber(),
                 client_id: clientData.id,
