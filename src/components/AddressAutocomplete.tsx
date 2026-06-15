@@ -35,8 +35,7 @@ async function searchNominatim(query: string): Promise<AddressResult[]> {
 
 async function searchGoogle(query: string, apiKey: string): Promise<AddressResult[]> {
   try {
-    // Google Places Autocomplete via proxy (no CORS issue with this endpoint)
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=fr&region=fr`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}&language=fr&region=fr&components=country:FR`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.status !== 'OK') return [];
@@ -54,10 +53,10 @@ async function searchGoogle(query: string, apiKey: string): Promise<AddressResul
 }
 
 function formatLabel(label: string): string {
-  // Keep first 2 parts (street + city) for cleaner display
-  const parts = label.split(',');
-  if (parts.length > 3) return parts.slice(0, 3).join(',').trim();
-  return label.trim();
+  const parts = label.split(',').map(p => p.trim()).filter(Boolean);
+  // Remove trailing country parts ("France", code postal seul, etc.)
+  const filtered = parts.filter(p => !/^France$/i.test(p));
+  return filtered.slice(0, 3).join(', ');
 }
 
 export default function AddressAutocomplete({ value, onChange, onSelect, placeholder = 'Adresse...', className = '', icon = true }: Props) {
