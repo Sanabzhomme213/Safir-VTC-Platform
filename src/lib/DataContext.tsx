@@ -56,6 +56,8 @@ export interface AppSettings {
   aviationstack_key: string;
   google_review_url: string;
   openai_key: string;
+  instagram_url: string;
+  facebook_url: string;
 }
 
 export const defaultSettings: AppSettings = {
@@ -75,6 +77,8 @@ export const defaultSettings: AppSettings = {
   aviationstack_key: '',
   google_review_url: '',
   openai_key: '',
+  instagram_url: '',
+  facebook_url: '',
 };
 
 type DataContextValue = {

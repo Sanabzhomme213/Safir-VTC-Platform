@@ -1,8 +1,8 @@
-﻿import { useState, useEffect } from 'react';
-import { Car, Calendar, MapPin, CreditCard, Star, LogOut, User, Clock, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Car, Calendar, MapPin, CreditCard, Star, LogOut, User, Clock, CheckCircle, AlertCircle, ChevronRight, Phone, Mail } from 'lucide-react';
 import { NavLink, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { formatCurrency, formatDate, reservationStatusLabel, reservationStatusColor } from '../lib/supabase';
+import { formatCurrency, formatDate, reservationStatusLabel, reservationStatusColor, generateBookingNumber } from '../lib/supabase';
 import type { Reservation, Client } from '../lib/supabase';
 import { clientSignOut, ensureClientRecord } from '../lib/clientAuth';
 
@@ -12,33 +12,79 @@ export default function ClientSpacePage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'reservations' | 'profile' | 'loyalty'>('reservations');
+  const [bookingCreated, setBookingCreated] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      if (!s) { setSession(null); return; }
-      const sess = { id: s.user.id, email: s.user.email, phone: s.user.phone };
-      setSession(sess);
-      await ensureClientRecord(sess);
+    async function init() {
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (!s) { setSession(null); setLoading(false); return; }
+        const sess = { id: s.user.id, email: s.user.email, phone: s.user.phone };
+        setSession(sess);
+        await ensureClientRecord(sess);
 
-      // Load client data
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('email', sess.email ?? '')
-        .maybeSingle();
-      setClient(clientData);
+        // Query by email OR phone (supports both login methods)
+        let clientData: Client | null = null;
+        if (sess.email) {
+          const { data } = await supabase.from('clients').select('*').eq('email', sess.email).maybeSingle();
+          clientData = data;
+        }
+        if (!clientData && sess.phone) {
+          const { data } = await supabase.from('clients').select('*').eq('phone', sess.phone).maybeSingle();
+          clientData = data;
+        }
+        setClient(clientData);
 
-      // Load reservations
-      if (clientData) {
-        const { data: resData } = await supabase
-          .from('reservations')
-          .select('*')
-          .eq('client_id', clientData.id)
-          .order('ride_date', { ascending: false });
-        setReservations(resData ?? []);
+        // Load reservations
+        if (clientData) {
+          const { data: resData } = await supabase
+            .from('reservations')
+            .select('*')
+            .eq('client_id', clientData.id)
+            .order('ride_date', { ascending: false });
+          setReservations(resData ?? []);
+
+          // Handle pending booking from landing page
+          const pendingRaw = sessionStorage.getItem('pending_booking');
+          if (pendingRaw && clientData) {
+            try {
+              const pending = JSON.parse(pendingRaw);
+              sessionStorage.removeItem('pending_booking');
+              const newRes = {
+                booking_number: generateBookingNumber(),
+                client_id: clientData.id,
+                departure_address: pending.departure,
+                arrival_address: pending.arrival,
+                ride_date: pending.date,
+                ride_time: pending.time,
+                passengers: parseInt(pending.passengers) || 1,
+                luggage: parseInt(pending.luggage) || 0,
+                distance_km: pending.distanceKm ?? 0,
+                total_price: pending.priceEstimate ?? 0,
+                deposit_amount: Math.round((pending.priceEstimate ?? 0) * 0.2),
+                status: 'pending' as const,
+                is_quote: pending.isQuote ?? false,
+                notes: '',
+                flight_number: '',
+                return_date: pending.returnDate ?? null,
+                return_time: pending.returnTime ?? null,
+              };
+              const { data: created, error } = await supabase.from('reservations').insert(newRes).select().single();
+              if (!error && created) {
+                setReservations(prev => [created, ...prev]);
+                setBookingCreated(true);
+                setActiveTab('reservations');
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        console.error('ClientSpace init error:', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    }
+    init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!s) setSession(null);
@@ -84,6 +130,14 @@ export default function ClientSpacePage() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Booking created banner */}
+        {bookingCreated && (
+          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 animate-fade-in">
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            <span className="text-sm font-medium">Votre réservation a été créée ! Vous recevrez une confirmation par email.</span>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white">
@@ -95,7 +149,7 @@ export default function ClientSpacePage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="glass rounded-xl p-4 text-center border border-white/8">
-            <p className="text-2xl font-bold text-sapphire-400">{client?.total_rides ?? 0}</p>
+            <p className="text-2xl font-bold text-sapphire-400">{reservations.filter(r => r.status === 'completed').length}</p>
             <p className="text-xs text-noir-400 mt-1">Trajets</p>
           </div>
           <div className="glass rounded-xl p-4 text-center border border-white/8">
@@ -110,7 +164,7 @@ export default function ClientSpacePage() {
 
         {/* Book again CTA */}
         <NavLink
-          to="/#booking"
+          to="/"
           className="flex items-center justify-between p-4 mb-6 rounded-xl bg-sapphire-600/15 border border-sapphire-500/20 hover:bg-sapphire-600/25 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -148,14 +202,15 @@ export default function ClientSpacePage() {
             ) : reservations.length === 0 ? (
               <div className="glass rounded-xl p-10 text-center border border-white/8">
                 <Calendar className="w-10 h-10 text-noir-600 mx-auto mb-3" />
-                <p className="text-noir-400">Aucune réservation pour le moment</p>
-                <NavLink to="/" className="inline-block mt-4 btn-primary text-sm px-5 py-2">Réserver maintenant</NavLink>
+                <p className="text-white font-medium mb-1">Aucune réservation pour le moment</p>
+                <p className="text-noir-400 text-sm mb-4">Réservez votre premier trajet en quelques secondes</p>
+                <NavLink to="/" className="inline-block btn-primary text-sm px-5 py-2">Réserver maintenant</NavLink>
               </div>
             ) : (
               <>
                 {upcoming.length > 0 && (
                   <>
-                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider">À venir</h3>
+                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider">À venir ({upcoming.length})</h3>
                     {upcoming.map(r => <ReservationCard key={r.id} r={r} />)}
                   </>
                 )}
@@ -172,20 +227,44 @@ export default function ClientSpacePage() {
 
         {/* Profile tab */}
         {activeTab === 'profile' && (
-          <div className="glass rounded-xl p-6 border border-white/8 space-y-4">
-            <h3 className="font-semibold text-white">Mes informations</h3>
-            {[
-              { label: 'Email', value: session.email },
-              { label: 'Téléphone', value: session.phone },
-              { label: 'Prénom', value: client?.first_name },
-              { label: 'Nom', value: client?.last_name },
-            ].map(f => f.value ? (
-              <div key={f.label} className="flex justify-between py-2 border-b border-white/5">
-                <span className="text-noir-400 text-sm">{f.label}</span>
-                <span className="text-white text-sm font-medium">{f.value}</span>
+          <div className="space-y-4">
+            <div className="glass rounded-xl p-6 border border-white/8">
+              <h3 className="font-semibold text-white mb-4">Mes informations</h3>
+              <div className="space-y-3">
+                {[
+                  { label: 'Email', value: session.email, icon: Mail },
+                  { label: 'Téléphone', value: session.phone, icon: Phone },
+                  { label: 'Prénom', value: client?.first_name, icon: User },
+                  { label: 'Nom', value: client?.last_name, icon: User },
+                ].filter(f => f.value).map(f => (
+                  <div key={f.label} className="flex items-center justify-between py-2.5 border-b border-white/5">
+                    <div className="flex items-center gap-2 text-noir-400 text-sm">
+                      <f.icon className="w-3.5 h-3.5" />
+                      {f.label}
+                    </div>
+                    <span className="text-white text-sm font-medium">{f.value}</span>
+                  </div>
+                ))}
               </div>
-            ) : null)}
-            <p className="text-xs text-noir-500">Pour modifier vos informations, contactez-nous.</p>
+              <div className="mt-4 p-3 rounded-lg bg-sapphire-600/5 border border-sapphire-500/10">
+                <p className="text-xs text-noir-400">Pour modifier vos informations, contactez-nous au <a href="tel:+33633828394" className="text-sapphire-400">+33 6 33 82 83 94</a>.</p>
+              </div>
+            </div>
+
+            {/* Contact card */}
+            <div className="glass rounded-xl p-5 border border-white/8">
+              <h3 className="font-semibold text-white mb-3">Nous contacter</h3>
+              <div className="space-y-2">
+                <a href="tel:+33633828394" className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors">
+                  <Phone className="w-4 h-4 text-sapphire-400" />
+                  <span className="text-sm text-white">+33 6 33 82 83 94</span>
+                </a>
+                <a href="mailto:contact@ambassadeur-vtc.fr" className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors">
+                  <Mail className="w-4 h-4 text-sapphire-400" />
+                  <span className="text-sm text-white">contact@ambassadeur-vtc.fr</span>
+                </a>
+              </div>
+            </div>
           </div>
         )}
 
@@ -200,8 +279,8 @@ export default function ClientSpacePage() {
                     {client?.loyalty_points ?? 0} points
                   </p>
                   <p className="text-xs text-noir-400">Statut : {
-                    (client?.total_rides ?? 0) >= 15 ? '⭐ VIP' :
-                    (client?.total_rides ?? 0) >= 5  ? '🥈 Fidèle' : '🆕 Nouveau'
+                    (reservations.filter(r => r.status === 'completed').length) >= 15 ? '⭐ VIP' :
+                    (reservations.filter(r => r.status === 'completed').length) >= 5  ? '🥈 Fidèle' : '🆕 Nouveau'
                   }</p>
                 </div>
               </div>
@@ -209,13 +288,13 @@ export default function ClientSpacePage() {
                 <div className="flex justify-between py-2 border-b border-white/5">
                   <span className="text-noir-400">Réduction actuelle</span>
                   <span className="text-emerald-400 font-medium">
-                    {(client?.total_rides ?? 0) >= 15 ? '10%' :
-                     (client?.total_rides ?? 0) >= 5  ? '5%' : '0%'}
+                    {(reservations.filter(r => r.status === 'completed').length) >= 15 ? '10%' :
+                     (reservations.filter(r => r.status === 'completed').length) >= 5  ? '5%' : '0%'}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-white/5">
-                  <span className="text-noir-400">Points pour VIP</span>
-                  <span className="text-white">{Math.max(0, 1000 - (client?.total_spent ?? 0))}€ de trajet restant</span>
+                <div className="flex justify-between py-2">
+                  <span className="text-noir-400">Trajets complétés</span>
+                  <span className="text-white font-medium">{reservations.filter(r => r.status === 'completed').length}</span>
                 </div>
               </div>
             </div>
@@ -223,17 +302,26 @@ export default function ClientSpacePage() {
             <div className="glass rounded-xl p-5 border border-white/8">
               <h4 className="font-medium text-white mb-3">Paliers de fidélité</h4>
               {[
-                { name: 'Nouveau', rides: 0, discount: '0%', color: 'text-noir-300' },
-                { name: 'Fidèle', rides: 5, discount: '5%', color: 'text-amber-300' },
-                { name: 'VIP',    rides: 15, discount: '10%', color: 'text-emerald-300' },
-              ].map(tier => (
-                <div key={tier.name} className={`flex items-center justify-between py-2 text-sm ${
-                  (client?.total_rides ?? 0) >= tier.rides ? tier.color : 'text-noir-600'
-                }`}>
-                  <span>{tier.name} (dès {tier.rides} trajets)</span>
-                  <span className="font-semibold">{tier.discount}</span>
-                </div>
-              ))}
+                { name: '🆕 Nouveau', rides: 0, discount: '0%', color: 'text-noir-300' },
+                { name: '🥈 Fidèle', rides: 5, discount: '5%', color: 'text-amber-300' },
+                { name: '⭐ VIP',    rides: 15, discount: '10%', color: 'text-emerald-300' },
+              ].map(tier => {
+                const completed = reservations.filter(r => r.status === 'completed').length;
+                const active = completed >= tier.rides;
+                return (
+                  <div key={tier.name} className={`flex items-center justify-between py-3 border-b border-white/5 last:border-0 text-sm ${active ? tier.color : 'text-noir-600'}`}>
+                    <div>
+                      <span className="font-medium">{tier.name}</span>
+                      <span className="text-xs ml-2 opacity-60">dès {tier.rides} trajet{tier.rides > 1 ? 's' : ''}</span>
+                    </div>
+                    <span className={`font-semibold px-2 py-0.5 rounded-full text-xs ${active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5'}`}>{tier.discount}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="glass rounded-xl p-4 border border-sapphire-500/10 text-center">
+              <p className="text-xs text-noir-400">1€ dépensé = 1 point fidélité · Les points sont crédités après chaque trajet complété</p>
             </div>
           </div>
         )}
@@ -262,19 +350,28 @@ function ReservationCard({ r }: { r: Reservation }) {
         </div>
       </div>
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-        <span className="text-xs text-noir-400">{r.distance_km} km · {r.passengers} pax</span>
-        <span className="font-bold text-white">{formatCurrency(r.total_price)}</span>
+        <div className="flex items-center gap-3 text-xs text-noir-400">
+          {r.distance_km > 0 && <span>{r.distance_km} km</span>}
+          <span>{r.passengers} pax</span>
+        </div>
+        <span className="font-bold text-white">{r.total_price > 0 ? formatCurrency(r.total_price) : 'Sur devis'}</span>
       </div>
       {r.status === 'pending' && r.deposit_amount > 0 && (
         <div className="mt-2 flex items-center gap-2 text-xs text-amber-300 bg-amber-500/10 rounded-lg px-3 py-2">
           <AlertCircle className="w-3.5 h-3.5" />
-          Acompte en attente : {formatCurrency(r.deposit_amount)}
+          Acompte en attente : {formatCurrency(r.deposit_amount)} — votre chauffeur vous contactera pour le paiement
         </div>
       )}
       {r.status === 'deposit_paid' && (
         <div className="mt-2 flex items-center gap-2 text-xs text-emerald-300 bg-emerald-500/10 rounded-lg px-3 py-2">
           <CheckCircle className="w-3.5 h-3.5" />
           Acompte payé — solde à régler : {formatCurrency(r.total_price - r.deposit_amount)}
+        </div>
+      )}
+      {r.status === 'confirmed' && (
+        <div className="mt-2 flex items-center gap-2 text-xs text-sapphire-300 bg-sapphire-500/10 rounded-lg px-3 py-2">
+          <Clock className="w-3.5 h-3.5" />
+          Réservation confirmée — votre chauffeur sera ponctuel
         </div>
       )}
     </div>

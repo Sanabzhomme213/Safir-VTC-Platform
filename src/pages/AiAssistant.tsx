@@ -50,8 +50,13 @@ const initialMessages: ChatMessage[] = [
   },
 ];
 
+function escapeHtml(s: string) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function renderMarkdown(text: string): string {
-  return text
+  const safe = escapeHtml(text);
+  return safe
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/^• /gm, '&bull; ')

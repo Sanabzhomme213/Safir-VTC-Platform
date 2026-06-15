@@ -23,7 +23,7 @@ export default function DashboardPage() {
 
   const currentMonth = today.slice(0, 7);
   const revenueMonth = reservations
-    .filter(r => r.ride_date.startsWith(currentMonth))
+    .filter(r => r.ride_date?.startsWith(currentMonth))
     .reduce((s, r) => s + r.total_price, 0);
 
   const depositsCollected = payments

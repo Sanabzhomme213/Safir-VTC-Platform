@@ -85,7 +85,7 @@ export default function ClientsPage() {
     } catch { showToast('Erreur lors de la suppression'); }
   };
 
-  const initials = (c: Client) => (c.first_name[0] + c.last_name[0]).toUpperCase();
+  const initials = (c: Client) => ((c.first_name?.[0] ?? '') + (c.last_name?.[0] ?? '')).toUpperCase() || '?';
 
   const avatarBg = (s: string) =>
     s === 'vip'   ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300' :

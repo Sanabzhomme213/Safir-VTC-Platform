@@ -113,7 +113,7 @@ export default function ReservationsPage() {
       showToast('Veuillez remplir tous les champs requis', false);
       return;
     }
-    const selectedClient = clients.find(c => c.id === form.clientId) ?? clients[0];
+    const selectedClient = clients.find(c => c.id === form.clientId);
     if (!selectedClient) {
       showToast('Veuillez sélectionner un client', false);
       return;

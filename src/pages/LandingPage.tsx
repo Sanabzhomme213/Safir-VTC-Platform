@@ -21,6 +21,12 @@ const _s = loadPublicSettings();
 const PHONE = _s.company_phone || '+33 6 33 82 83 94';
 const EMAIL = _s.company_email || 'contact@ambassadeur-vtc.fr';
 const GOOGLE_REVIEW_URL = _s.google_review_url || 'https://www.google.com/maps/search/?api=1&query=vtc+var+ambassadeur';
+const INSTAGRAM_URL = _s.instagram_url || '';
+const FACEBOOK_URL = _s.facebook_url || '';
+const PRICE_KM = parseFloat(_s.pricing_per_km as string) || 1.8;
+const PRICE_MIN = parseFloat(_s.pricing_min as string) || 25;
+const PRICE_RT_DISC = parseFloat(_s.pricing_round_trip_discount as string) || 10;
+const PRICE_DISPOSAL = parseFloat(_s.pricing_disposal_hourly as string) || 45;
 
 const services = [
   { icon: Plane, label: 'Transfert Aéroport', desc: 'Nice, Toulon, Marseille — suivi de vol en temps réel, prise en charge garantie', price: 'Dès 45€' },
@@ -77,6 +83,7 @@ export default function LandingPage() {
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [estimating, setEstimating] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [legalModal, setLegalModal] = useState<string | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -92,8 +99,8 @@ export default function LandingPage() {
     const roadKm = Math.round(straightKm * 1.3 * 10) / 10;
     setDistanceKm(roadKm);
     const price = calculatePrice(roadKm, form.type, {
-      pricing_per_km: 1.8, pricing_min: 25,
-      pricing_round_trip_discount: 10, pricing_disposal_hourly: 45,
+      pricing_per_km: PRICE_KM, pricing_min: PRICE_MIN,
+      pricing_round_trip_discount: PRICE_RT_DISC, pricing_disposal_hourly: PRICE_DISPOSAL,
     });
     setPriceEstimate(price);
     setEstimating(false);
@@ -104,7 +111,6 @@ export default function LandingPage() {
       alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
-    // Persist booking data so client portal can retrieve it after login
     sessionStorage.setItem('pending_booking', JSON.stringify({
       departure: form.departure,
       arrival: form.arrival,
@@ -119,7 +125,8 @@ export default function LandingPage() {
       distanceKm: distanceKm,
       isQuote,
     }));
-    window.location.hash = '/client/login';
+    setSubmitted(true);
+    setTimeout(() => { window.location.hash = '/client/login'; }, 2000);
   };
 
   const scrollTo = (id: string) => {
@@ -327,7 +334,7 @@ export default function LandingPage() {
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500" />
                     <select value={form.passengers} onChange={(e) => setForm({ ...form, passengers: e.target.value })} className="input-field pl-9">
-                      {[1,2,3].map((n) => <option key={n} value={n}>{n} passager{n > 1 ? 's' : ''}</option>)}
+                      {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n} passager{n > 1 ? 's' : ''}</option>)}
                     </select>
                   </div>
                 </div>
@@ -387,7 +394,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2 px-5 py-2 border-t border-sapphire-500/10 bg-sapphire-600/5">
                     <Navigation className="w-3.5 h-3.5 text-sapphire-400" />
-                    <p className="text-xs text-noir-400">{distanceKm} km estimés · 1,80€/km</p>
+                    <p className="text-xs text-noir-400">{distanceKm} km estimés · {PRICE_KM.toFixed(2).replace('.',',')}€/km</p>
                   </div>
                 </div>
               )}
@@ -681,35 +688,51 @@ export default function LandingPage() {
               </div>
               <p className="text-sm text-noir-500 mb-4 leading-relaxed">Service de chauffeur privé premium dans le Var et sur la Côte d'Azur. Disponible 24h/24.</p>
               <div className="flex gap-3">
-                {[Instagram, Facebook].map((Icon, i) => (
-                  <a key={i} href="#" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-noir-400 hover:text-white hover:bg-white/10 transition">
-                    <Icon className="w-4 h-4" />
+                {INSTAGRAM_URL && (
+                  <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-noir-400 hover:text-white hover:bg-white/10 transition">
+                    <Instagram className="w-4 h-4" />
                   </a>
-                ))}
+                )}
+                {FACEBOOK_URL && (
+                  <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-noir-400 hover:text-white hover:bg-white/10 transition">
+                    <Facebook className="w-4 h-4" />
+                  </a>
+                )}
               </div>
             </div>
 
-            {[
-              { title: 'Services', links: ['Transfert aéroport', 'Transfert gare', 'Mise à disposition', 'Transport corporate'] },
-              { title: 'Destinations', links: ['VTC Toulon', 'VTC Hyères', 'VTC Saint-Tropez', 'VTC Fréjus'] },
-              { title: 'Contact', links: [`Tel: ${PHONE}`, `Email: ${EMAIL}`, 'Var & Côte d\'Azur', 'Disponible 24/7'] },
-            ].map((col) => (
-              <div key={col.title}>
-                <h4 className="font-semibold mb-4 text-sm">{col.title}</h4>
-                <ul className="space-y-2">
-                  {col.links.map((l) => (
-                    <li key={l}><a href="#" className="text-sm text-noir-500 hover:text-noir-300 transition-colors">{l}</a></li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Services</h4>
+              <ul className="space-y-2">
+                {['Transfert aéroport', 'Transfert gare', 'Mise à disposition', 'Transport corporate'].map(l => (
+                  <li key={l}><button onClick={() => scrollTo('booking')} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{l}</button></li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Destinations</h4>
+              <ul className="space-y-2">
+                {[['VTC Toulon','Toulon'], ['VTC Hyères','Hyères'], ['VTC Saint-Tropez','Saint-Tropez'], ['VTC Fréjus','Fréjus']].map(([label, city]) => (
+                  <li key={label}><button onClick={() => { setForm(f => ({ ...f, departure: city })); scrollTo('booking'); }} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{label}</button></li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Contact</h4>
+              <ul className="space-y-2">
+                <li><a href={`tel:${PHONE}`} className="text-sm text-noir-500 hover:text-noir-300 transition-colors">Tel: {PHONE}</a></li>
+                <li><a href={`mailto:${EMAIL}`} className="text-sm text-noir-500 hover:text-noir-300 transition-colors">Email: {EMAIL}</a></li>
+                <li><span className="text-sm text-noir-500">Var &amp; Côte d'Azur</span></li>
+                <li><span className="text-sm text-noir-500">Disponible 24/7</span></li>
+              </ul>
+            </div>
           </div>
 
           <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-noir-600">© 2025 L'Ambassadeur des VTC. Tous droits réservés.</p>
+            <p className="text-xs text-noir-600">© {new Date().getFullYear()} L'Ambassadeur des VTC. Tous droits réservés.</p>
             <div className="flex gap-6">
               {['Mentions légales', 'CGU', 'Politique de confidentialité'].map((l) => (
-                <a key={l} href="#" className="text-xs text-noir-600 hover:text-noir-400 transition-colors">{l}</a>
+                <button key={l} onClick={() => setLegalModal(l)} className="text-xs text-noir-600 hover:text-noir-400 transition-colors">{l}</button>
               ))}
             </div>
           </div>
@@ -722,6 +745,62 @@ export default function LandingPage() {
           <Phone className="w-6 h-6 text-white" />
         </a>
       </div>
+
+      {/* Legal modals */}
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setLegalModal(null)}>
+          <div className="bg-noir-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">{legalModal}</h2>
+              <button onClick={() => setLegalModal(null)} className="text-noir-400 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            {legalModal === 'Mentions légales' && (
+              <div className="prose prose-invert prose-sm max-w-none text-noir-300 space-y-4">
+                <p><strong className="text-white">Éditeur du site</strong><br />
+                L'Ambassadeur des VTC<br />
+                Chauffeur VTC indépendant — Carte professionnelle VTC<br />
+                Téléphone : {PHONE}<br />
+                Email : {EMAIL}<br />
+                Zone d'activité : Var &amp; Côte d'Azur, France</p>
+                <p><strong className="text-white">Hébergement</strong><br />
+                Vercel Inc. — 340 Pine Street Suite 701, San Francisco, CA 94104, USA</p>
+                <p><strong className="text-white">Responsabilité</strong><br />
+                Les informations fournies sur ce site le sont à titre indicatif. L'Ambassadeur des VTC ne saurait être tenu responsable des erreurs ou omissions.</p>
+              </div>
+            )}
+            {legalModal === 'CGU' && (
+              <div className="prose prose-invert prose-sm max-w-none text-noir-300 space-y-4">
+                <p><strong className="text-white">1. Objet</strong><br />
+                Les présentes conditions générales d'utilisation régissent l'accès et l'utilisation du service de réservation en ligne proposé par L'Ambassadeur des VTC.</p>
+                <p><strong className="text-white">2. Services</strong><br />
+                L'Ambassadeur des VTC propose un service de transport privé avec chauffeur (VTC) dans le Var et sur la Côte d'Azur. Les tarifs sont calculés à titre indicatif et peuvent varier selon les conditions réelles de trajet.</p>
+                <p><strong className="text-white">3. Réservation</strong><br />
+                Toute réservation est confirmée par email ou SMS. Un acompte peut être demandé pour valider la réservation. L'annulation gratuite est possible jusqu'à 24h avant la course.</p>
+                <p><strong className="text-white">4. Responsabilité</strong><br />
+                Le chauffeur est assuré en responsabilité civile professionnelle. En cas de retard dû à des circonstances extérieures (trafic, météo, etc.), la responsabilité du chauffeur ne saurait être engagée.</p>
+                <p><strong className="text-white">5. Données personnelles</strong><br />
+                Vos données sont traitées conformément à notre politique de confidentialité et au RGPD.</p>
+              </div>
+            )}
+            {legalModal === 'Politique de confidentialité' && (
+              <div className="prose prose-invert prose-sm max-w-none text-noir-300 space-y-4">
+                <p><strong className="text-white">Responsable du traitement</strong><br />
+                L'Ambassadeur des VTC — {EMAIL}</p>
+                <p><strong className="text-white">Données collectées</strong><br />
+                Nous collectons vos nom, prénom, email, numéro de téléphone et adresses de trajet dans le seul but d'assurer la prestation de transport commandée.</p>
+                <p><strong className="text-white">Utilisation des données</strong><br />
+                Vos données sont utilisées pour : confirmer et gérer vos réservations, vous envoyer des communications relatives à votre course, améliorer notre service. Elles ne sont jamais vendues à des tiers.</p>
+                <p><strong className="text-white">Conservation</strong><br />
+                Vos données sont conservées 3 ans après votre dernière interaction avec notre service.</p>
+                <p><strong className="text-white">Vos droits</strong><br />
+                Vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez-nous à {EMAIL}.</p>
+                <p><strong className="text-white">Cookies</strong><br />
+                Ce site utilise uniquement des cookies techniques nécessaires au bon fonctionnement du service. Aucun cookie publicitaire ou de traçage tiers n'est utilisé.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

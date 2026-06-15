@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Settings as SettingsIcon, Save,
   Check, AlertCircle
@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [saved, setSaved] = useState(false);
   const [local, setLocal] = useState<AppSettings>({ ...settings });
+  useEffect(() => { setLocal({ ...settings }); }, [settings]);
 
   const handleSave = async () => {
     await updateSettings(local);
@@ -73,6 +74,10 @@ export default function SettingsPage() {
             <Field label="Adresse" value={local.company_address} onChange={v => set('company_address', v)} />
             <Field label="URL avis Google (lien direct)" value={local.google_review_url} onChange={v => set('google_review_url', v)} placeholder="https://g.page/r/..." />
             <p className="text-xs text-noir-500">Trouvez ce lien dans Google Business Profile → Obtenir des avis → Lien court.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="URL Instagram" value={local.instagram_url} onChange={v => set('instagram_url', v)} placeholder="https://www.instagram.com/..." />
+              <Field label="URL Facebook" value={local.facebook_url} onChange={v => set('facebook_url', v)} placeholder="https://www.facebook.com/..." />
+            </div>
           </div>
           <SaveBtn onClick={handleSave} />
         </div>

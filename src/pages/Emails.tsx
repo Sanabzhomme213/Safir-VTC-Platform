@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { sendEmail } from '../lib/emailService';
 import {
   Mail,
   Send,
@@ -40,7 +41,8 @@ interface AutomationRule {
 }
 
 export default function EmailsPage() {
-  const { emailLogs } = useData();
+  const { emailLogs, clients } = useData();
+  const clientMap = Object.fromEntries(clients.map(c => [c.id, `${c.first_name} ${c.last_name}`.trim() || c.email]));
   const [localEmails, setLocalEmails] = useState<Email[]>([]);
 
   const emails = useMemo<Email[]>(() => [
@@ -49,7 +51,7 @@ export default function EmailsPage() {
       id: log.id,
       type: (log.email_type ?? 'custom') as keyof typeof emailTypeLabel,
       subject: log.subject,
-      client: log.client_id ?? 'Client',
+      client: (log.client_id ? (clientMap[log.client_id] ?? log.client_id) : 'Client'),
       status: log.status as 'sent' | 'pending' | 'failed',
       sent_date: log.sent_at ?? log.created_at,
     })),
@@ -58,6 +60,7 @@ export default function EmailsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showComposeForm, setShowComposeForm] = useState(false);
+  const [sending, setSending] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [composeData, setComposeData] = useState<ComposeFormData>({
     recipient: '',
@@ -103,15 +106,13 @@ export default function EmailsPage() {
     },
   ]);
 
+  const todayStr = new Date().toISOString().split('T')[0];
   const stats = {
-    sent_today: emails.filter((e) => e.status === 'sent').length,
+    sent_today: emails.filter((e) => e.status === 'sent' && e.sent_date.startsWith(todayStr)).length,
     delivery_rate:
       emails.length > 0
-        ? Math.round(
-            (emails.filter((e) => e.status === 'sent').length / emails.length) *
-              100
-          )
-        : 0,
+        ? Math.round((emails.filter((e) => e.status === 'sent').length / emails.length) * 100)
+        : 100,
     pending: emails.filter((e) => e.status === 'pending').length,
   };
 
@@ -121,25 +122,29 @@ export default function EmailsPage() {
     return typeMatch && statusMatch;
   });
 
-  const handleSendEmail = () => {
+  const handleSendEmail = useCallback(async () => {
+    if (!composeData.recipient || !composeData.subject || !composeData.body) return;
+    setSending(true);
+    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) ?? '';
+    const result = await sendEmail({
+      to: composeData.recipient,
+      subject: composeData.subject,
+      html: `<div style="font-family:Arial,sans-serif;white-space:pre-wrap">${composeData.body.replace(/\n/g,'<br/>')}</div>`,
+    }, supabaseUrl);
     const newEmail: Email = {
       id: `email-${Date.now()}`,
       type: composeData.type,
       subject: composeData.subject,
       client: composeData.recipient,
-      status: 'sent',
+      status: result.ok ? 'sent' : 'failed',
       sent_date: new Date().toISOString(),
       content: composeData.body,
     };
     setLocalEmails(prev => [newEmail, ...prev]);
     setShowComposeForm(false);
-    setComposeData({
-      recipient: '',
-      type: 'booking_confirmation',
-      subject: '',
-      body: '',
-    });
-  };
+    setComposeData({ recipient: '', type: 'booking_confirmation', subject: '', body: '' });
+    setSending(false);
+  }, [composeData]);
 
   const handleToggleRule = (ruleId: string) => {
     setAutomationRules(
@@ -302,6 +307,14 @@ export default function EmailsPage() {
                 </tr>
               </thead>
               <tbody>
+                {filteredEmails.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-noir-500">
+                      <Mail className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                      <p>Aucun email trouvé</p>
+                    </td>
+                  </tr>
+                )}
                 {filteredEmails.map((email) => (
                   <tr
                     key={email.id}
