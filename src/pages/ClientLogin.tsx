@@ -63,20 +63,20 @@ export default function ClientLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-noir-950 flex flex-col">
-      <nav className="border-b border-white/5 px-6 py-4 flex items-center gap-4">
-        <NavLink to="/" className="flex items-center gap-2 text-white font-semibold">
-          <div className="w-8 h-8 rounded-lg bg-sapphire-600 flex items-center justify-center">
-            <Car className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-noir-950 flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <nav className="border-b border-white/5 px-5 py-4 flex items-center gap-4 bg-noir-950/90 backdrop-blur-xl sticky top-0 z-10">
+        <NavLink to="/" className="flex items-center gap-2.5 text-white font-bold">
+          <div className="w-9 h-9 rounded-xl bg-sapphire-600 flex items-center justify-center shadow-lg shadow-sapphire-900/50">
+            <Car className="w-4.5 h-4.5 text-white" />
           </div>
           L'Ambassadeur des VTC
         </NavLink>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-start sm:items-center justify-center p-4 pb-safe">
+        <div className="w-full max-w-md py-4">
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-white">Mon Espace Client</h1>
             <p className="text-noir-400 text-sm mt-2">Gérez vos réservations et votre programme fidélité</p>
           </div>

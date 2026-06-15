@@ -182,9 +182,9 @@ export default function BookingSection({ onScrollRequest }: Props) {
   const typeLabel = form.type === 'one_way' ? 'Aller simple' : form.type === 'round_trip' ? 'Aller-retour' : 'Mise à disposition';
 
   return (
-    <div className="grid lg:grid-cols-[42%_58%] min-h-[640px]">
+    <div className="grid lg:grid-cols-[42%_58%] min-h-[580px]">
       {/* LEFT PANEL */}
-      <div className="bg-noir-950 p-6 lg:p-10 flex flex-col order-1">
+      <div className="bg-noir-950 p-5 sm:p-8 lg:p-10 flex flex-col order-1">
         {/* Step indicator */}
         <div className="flex items-center justify-center mb-8">
           {([1, 2, 3] as const).map((step, idx) => (
@@ -451,13 +451,13 @@ export default function BookingSection({ onScrollRequest }: Props) {
       </div>
 
       {/* RIGHT — MAP */}
-      <div className="relative min-h-[360px] lg:min-h-full order-2 bg-noir-900">
+      <div className="relative min-h-[280px] sm:min-h-[340px] lg:min-h-full order-2 bg-noir-900">
         <MapContainer
           center={[43.12, 5.93]}
           zoom={10}
           zoomControl={false}
           scrollWheelZoom={false}
-          style={{ height: '100%', width: '100%', minHeight: '360px', background: '#0a0a0a' }}
+          style={{ height: '100%', width: '100%', minHeight: '280px', background: '#0a0a0a' }}
         >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"

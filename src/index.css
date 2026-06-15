@@ -6,19 +6,45 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.1) transparent;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
   }
   *::-webkit-scrollbar { width: 6px; height: 6px; }
   *::-webkit-scrollbar-track { background: transparent; }
   *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
   *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
+  /* Hide scrollbars on mobile */
+  @media (max-width: 1024px) {
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+  }
+
   ::selection {
     background: rgba(19, 51, 225, 0.4);
     color: white;
   }
 
+  html {
+    /* Prevent horizontal overflow on mobile */
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden;
+    /* iOS safe-area padding for Dynamic Island / home indicator */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   input, select, textarea {
     font-family: inherit;
+    /* Prevent iOS zoom on focus (font-size >= 16px) */
+    font-size: 16px;
+  }
+
+  /* Instant tap on all interactive elements (remove 300ms iOS delay) */
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 }
 
@@ -27,6 +53,7 @@
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .glass-hover:hover {
@@ -39,23 +66,27 @@
   }
 
   .btn-primary {
-    @apply bg-sapphire-600 hover:bg-sapphire-700 text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-sapphire-600 hover:bg-sapphire-700 active:bg-sapphire-800 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 48px;
   }
 
   .btn-secondary {
-    @apply bg-white/5 hover:bg-white/10 text-white border border-white/10 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 active:scale-[0.98];
+    @apply bg-white/5 hover:bg-white/10 active:bg-white/15 text-white border border-white/10 font-semibold px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.97];
+    min-height: 48px;
   }
 
   .btn-danger {
-    @apply bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20 font-medium px-4 py-2.5 rounded-lg transition-all duration-200;
+    @apply bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20 font-medium px-4 py-2.5 rounded-xl transition-all duration-200;
   }
 
   .input-field {
-    @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-noir-400 focus:outline-none focus:border-sapphire-500/50 focus:ring-1 focus:ring-sapphire-500/25 transition-all duration-200;
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-noir-500 focus:outline-none focus:border-sapphire-500/60 focus:ring-2 focus:ring-sapphire-500/20 transition-all duration-200;
+    min-height: 52px;
+    font-size: 16px; /* Prevent iOS zoom */
   }
 
   .card {
-    @apply glass rounded-xl p-6 transition-all duration-300;
+    @apply glass rounded-2xl p-5 transition-all duration-300;
   }
 
   .stat-card {
@@ -85,10 +116,73 @@
   .badge-neutral {
     @apply badge bg-white/10 text-noir-300 border border-white/10;
   }
+
+  /* Safe-area bottom padding for iPhone home indicator */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pb-safe-xl {
+    padding-bottom: max(5rem, calc(4rem + env(safe-area-inset-bottom)));
+  }
+
+  /* Bottom nav bar safe area */
+  .bottom-bar {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Shimmer skeleton */
+  .shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Leaflet overrides for dark theme */
+.leaflet-control-zoom a {
+  background: rgba(10,10,25,0.9) !important;
+  color: white !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: rgba(51,108,255,0.3) !important;
+}
+.leaflet-control-attribution {
+  background: rgba(10,10,10,0.6) !important;
+  color: rgba(255,255,255,0.3) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a {
+  color: rgba(255,255,255,0.4) !important;
 }

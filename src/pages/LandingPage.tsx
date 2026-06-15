@@ -151,26 +151,26 @@ export default function LandingPage() {
               Disponible 24h/24 — 7j/7
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 animate-slide-up">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-5 animate-slide-up">
               Votre chauffeur<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sapphire-400 to-sapphire-200">premium</span><br />
-              dans le Var & la Côte d'Azur
+              <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white/80">dans le Var & la Côte d'Azur</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-noir-300 mb-8 max-w-xl leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Transferts aéroport (Nice, Toulon, Marseille), gare, corporate. Tesla Model Y 2026, chauffeur professionnel. Réservation instantanée.
+            <p className="text-base md:text-xl text-noir-300 mb-7 max-w-xl leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              Transferts aéroport (Nice, Toulon, Marseille), gare, corporate. Tesla Model Y 2026, chauffeur pro. Confirmation immédiate.
             </p>
 
-            <div className="flex flex-wrap gap-4 mb-12 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <button onClick={() => scrollTo('booking')} className="btn-primary flex items-center gap-2 px-6 py-3 text-base">
+            <div className="flex flex-col sm:flex-row gap-3 mb-10 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              <button onClick={() => scrollTo('booking')} className="btn-primary flex items-center justify-center gap-2 px-6 py-3.5 text-base shadow-xl shadow-sapphire-900/50">
                 Réserver maintenant <ArrowRight className="w-4 h-4" />
               </button>
               {PHONE !== '+33 6 XX XX XX XX' ? (
-                <a href={`tel:${PHONE}`} className="btn-secondary flex items-center gap-2 px-6 py-3 text-base">
+                <a href={`tel:${PHONE}`} className="btn-secondary flex items-center justify-center gap-2 px-6 py-3.5 text-base">
                   <Phone className="w-4 h-4" /> {PHONE}
                 </a>
               ) : (
-                <button onClick={() => scrollTo('booking')} className="btn-secondary flex items-center gap-2 px-6 py-3 text-base">
+                <button onClick={() => scrollTo('booking')} className="btn-secondary flex items-center justify-center gap-2 px-6 py-3.5 text-base">
                   <Phone className="w-4 h-4" /> Nous appeler
                 </button>
               )}
@@ -194,17 +194,17 @@ export default function LandingPage() {
         {/* Stats banner */}
         <div className="relative z-10 border-t border-white/5 bg-white/[0.02] backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {[
                 { value: '4.9/5', label: 'Note Google', sub: '+200 avis' },
-                { value: '2000+', label: 'Trajets réalisés', sub: 'Service premium' },
+                { value: '2000+', label: 'Trajets', sub: 'Service premium' },
                 { value: '100%', label: 'Ponctualité', sub: 'Garantie' },
-                { value: '24/7', label: 'Disponibilité', sub: 'Toujours là' },
+                { value: '24/7', label: 'Disponible', sub: 'Toujours là' },
               ].map((s) => (
                 <div key={s.label} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-white">{s.value}</div>
-                  <div className="text-sm font-medium text-noir-300 mt-0.5">{s.label}</div>
-                  <div className="text-xs text-noir-500">{s.sub}</div>
+                  <div className="text-xl md:text-3xl font-black text-white">{s.value}</div>
+                  <div className="text-xs md:text-sm font-semibold text-noir-300 mt-0.5">{s.label}</div>
+                  <div className="text-[10px] md:text-xs text-noir-500">{s.sub}</div>
                 </div>
               ))}
             </div>
@@ -552,12 +552,21 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Floating CTA */}
-      <div className="fixed bottom-6 right-6 z-40 lg:hidden">
-        <a href={`tel:${PHONE}`} className="flex items-center justify-center w-14 h-14 rounded-full bg-sapphire-600 shadow-lg shadow-sapphire-900/50 hover:bg-sapphire-700 transition-all active:scale-95">
-          <Phone className="w-6 h-6 text-white" />
-        </a>
-      </div>
+      {/* Floating mobile CTA bar — shows when hero is off-screen */}
+      {scrolled && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-noir-950/95 backdrop-blur-xl border-t border-white/8 px-4 py-3 flex gap-3 animate-slide-up"
+             style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+          <a href={`tel:${PHONE}`}
+            className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/8 border border-white/10 text-white flex-shrink-0 active:scale-95 transition-all">
+            <Phone className="w-5 h-5" />
+          </a>
+          <button onClick={() => scrollTo('booking')}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-sapphire-600 text-white font-semibold text-base shadow-lg shadow-sapphire-900/40 active:scale-[0.98] transition-all">
+            <Car className="w-5 h-5" />
+            Réserver maintenant
+          </button>
+        </div>
+      )}
 
       {/* Legal modals */}
       {legalModal && (
