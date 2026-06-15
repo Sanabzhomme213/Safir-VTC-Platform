@@ -13,8 +13,8 @@ serve(async (req) => {
     const apiKey = Deno.env.get('RESEND_API_KEY');
     if (!apiKey) throw new Error('RESEND_API_KEY not set in Supabase secrets');
 
-    const fromAddress = from ?? Deno.env.get('RESEND_FROM_EMAIL') ?? 'noreply@safir-vtc.fr';
-    const fromLabel   = fromName ?? Deno.env.get('RESEND_FROM_NAME') ?? 'Safir VTC';
+    const fromAddress = from ?? Deno.env.get('RESEND_FROM_EMAIL') ?? 'noreply@ambassadeur-des-vtc.fr';
+    const fromLabel   = fromName ?? Deno.env.get('RESEND_FROM_NAME') ?? "L'Ambassadeur des VTC";
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

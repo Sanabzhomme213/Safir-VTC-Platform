@@ -4,10 +4,9 @@ import {
   Car, MapPin, Star, Phone, ArrowRight, ChevronDown,
   Shield, Clock, CreditCard, Plane, CheckCircle, Menu, X,
   Users, MessageCircle, Instagram, Facebook,
-  Send, Calendar, Luggage, UserCircle, Navigation
+  Luggage, UserCircle
 } from 'lucide-react';
-import AddressAutocomplete, { type AddressResult } from '../components/AddressAutocomplete';
-import { haversineDistance, calculatePrice } from '../lib/distance';
+import BookingSection from '../components/BookingSection';
 
 function loadPublicSettings() {
   try {
@@ -23,10 +22,6 @@ const EMAIL = _s.company_email || 'contact@ambassadeur-vtc.fr';
 const GOOGLE_REVIEW_URL = _s.google_review_url || 'https://www.google.com/maps/search/?api=1&query=vtc+var+ambassadeur';
 const INSTAGRAM_URL = _s.instagram_url || '';
 const FACEBOOK_URL = _s.facebook_url || '';
-const PRICE_KM = parseFloat(_s.pricing_per_km as string) || 1.8;
-const PRICE_MIN = parseFloat(_s.pricing_min as string) || 25;
-const PRICE_RT_DISC = parseFloat(_s.pricing_round_trip_discount as string) || 10;
-const PRICE_DISPOSAL = parseFloat(_s.pricing_disposal_hourly as string) || 45;
 
 const services = [
   { icon: Plane, label: 'Transfert Aéroport', desc: 'Nice, Toulon, Marseille — suivi de vol en temps réel, prise en charge garantie', price: 'Dès 45€' },
@@ -76,87 +71,11 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [legalModal, setLegalModal] = useState<string | null>(null);
 
-  // Wizard state
-  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
-  const [form, setForm] = useState({
-    departure: '', arrival: '', date: '', time: '', passengers: 1, luggage: 0, type: 'one_way',
-    returnDate: '', returnTime: '', flightNumber: '',
-  });
-
-  const isAirport = /a[ée]roport|airport|aéro|\bNCE\b|\bTLN\b|\bMRS\b|\bCDG\b|\bORY\b|\bLYS\b|\bNTE\b|\bBOD\b/i.test(form.departure + ' ' + form.arrival);
-  const [coords, setCoords] = useState<{ dep: AddressResult | null; arr: AddressResult | null }>({ dep: null, arr: null });
-  const [priceEstimate, setPriceEstimate] = useState<number | null>(null);
-  const [distanceKm, setDistanceKm] = useState<number | null>(null);
-  const [step1Errors, setStep1Errors] = useState<{ departure?: string; arrival?: string }>({});
-  const [step2Errors, setStep2Errors] = useState<{ date?: string; time?: string; returnDate?: string; returnTime?: string }>({});
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  // Auto-estimate when both addresses are selected with coordinates
-  useEffect(() => {
-    if (!coords.dep || !coords.arr || !coords.dep.lat || !coords.arr.lat) {
-      setPriceEstimate(null);
-      setDistanceKm(null);
-      return;
-    }
-    const straightKm = haversineDistance(coords.dep.lat, coords.dep.lng, coords.arr.lat, coords.arr.lng);
-    const roadKm = Math.round(straightKm * 1.3 * 10) / 10;
-    setDistanceKm(roadKm);
-    const price = calculatePrice(roadKm, form.type, {
-      pricing_per_km: PRICE_KM, pricing_min: PRICE_MIN,
-      pricing_round_trip_discount: PRICE_RT_DISC, pricing_disposal_hourly: PRICE_DISPOSAL,
-    });
-    setPriceEstimate(price);
-  }, [coords.dep, coords.arr, form.type]);
-
-  const today = new Date().toISOString().split('T')[0];
-
-  const goToStep2 = () => {
-    const errors: typeof step1Errors = {};
-    if (!form.departure) errors.departure = 'Veuillez saisir une adresse de départ';
-    if (!form.arrival) errors.arrival = "Veuillez saisir une adresse d'arrivée";
-    setStep1Errors(errors);
-    if (Object.keys(errors).length === 0) setWizardStep(2);
-  };
-
-  const goToStep3 = () => {
-    const errors: typeof step2Errors = {};
-    if (!form.date) errors.date = 'Veuillez choisir une date';
-    if (!form.time) errors.time = 'Veuillez choisir une heure';
-    if (form.type === 'round_trip') {
-      if (!form.returnDate) errors.returnDate = 'Veuillez choisir une date de retour';
-      if (!form.returnTime) errors.returnTime = 'Veuillez choisir une heure de retour';
-    }
-    setStep2Errors(errors);
-    if (Object.keys(errors).length === 0) setWizardStep(3);
-  };
-
-  const handleBook = (isQuote = false) => {
-    localStorage.setItem('pending_booking', JSON.stringify({
-      departure: form.departure,
-      arrival: form.arrival,
-      date: form.date,
-      time: form.time,
-      passengers: String(form.passengers),
-      luggage: String(form.luggage),
-      type: form.type,
-      returnDate: form.returnDate || null,
-      returnTime: form.returnTime || null,
-      priceEstimate: priceEstimate,
-      distanceKm: distanceKm,
-      depLat: coords.dep?.lat ?? null,
-      depLng: coords.dep?.lng ?? null,
-      arrLat: coords.arr?.lat ?? null,
-      arrLng: coords.arr?.lng ?? null,
-      flightNumber: form.flightNumber || null,
-      isQuote,
-    }));
-    window.location.href = '/#/client/login';
-  };
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -306,330 +225,12 @@ export default function LandingPage() {
             <p className="text-noir-400 max-w-xl mx-auto">Obtenez un tarif instantané et réservez en 2 minutes</p>
           </div>
 
-          <div className="max-w-2xl mx-auto">
-            <div className="glass rounded-2xl p-6 lg:p-8 glow-sapphire">
+          <div className="glass rounded-2xl overflow-hidden glow-sapphire">
+            <BookingSection />
+          </div>
 
-              {/* Step indicator */}
-              <div className="flex items-center justify-center mb-8">
-                {([1, 2, 3] as const).map((step, idx) => (
-                  <div key={step} className="flex items-center">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                      wizardStep > step
-                        ? 'bg-sapphire-600/50 text-sapphire-200'
-                        : wizardStep === step
-                        ? 'bg-sapphire-600 text-white shadow-lg shadow-sapphire-900/50'
-                        : 'bg-white/10 text-noir-500'
-                    }`}>
-                      {wizardStep > step ? <CheckCircle className="w-4 h-4" /> : step}
-                    </div>
-                    {idx < 2 && (
-                      <div className={`w-16 h-0.5 mx-1 transition-all ${wizardStep > step + 1 || (wizardStep > step) ? 'bg-sapphire-600/50' : 'bg-white/10'}`} />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* STEP 1 — Itinéraire */}
-              {wizardStep === 1 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-5 text-center">Votre itinéraire</h3>
-
-                  {/* Type selector */}
-                  <div className="flex gap-1.5 mb-6 p-1 bg-white/5 rounded-xl">
-                    {([['one_way', 'Aller simple'], ['round_trip', 'Aller-retour'], ['disposal', 'Mise à disposition']] as const).map(([val, label]) => (
-                      <button key={val} onClick={() => setForm(f => ({ ...f, type: val }))}
-                        className={`flex-1 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${form.type === val ? 'bg-sapphire-600 text-white' : 'text-noir-400 hover:text-white'}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-medium text-noir-400 mb-1.5">Départ</label>
-                      <AddressAutocomplete
-                        value={form.departure}
-                        onChange={v => { setForm(f => ({ ...f, departure: v })); setStep1Errors(e => ({ ...e, departure: undefined })); }}
-                        onSelect={r => { setForm(f => ({ ...f, departure: r.label })); setCoords(c => ({ ...c, dep: r })); setStep1Errors(e => ({ ...e, departure: undefined })); }}
-                        placeholder="Adresse de départ..."
-                      />
-                      {step1Errors.departure && <p className="mt-1 text-xs text-red-400">{step1Errors.departure}</p>}
-                    </div>
-
-                    <div className="flex justify-center">
-                      <div className="w-8 h-8 rounded-full bg-sapphire-600/20 border border-sapphire-500/30 flex items-center justify-center">
-                        <ArrowRight className="w-4 h-4 text-sapphire-400 rotate-90" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-noir-400 mb-1.5">Arrivée</label>
-                      <AddressAutocomplete
-                        value={form.arrival}
-                        onChange={v => { setForm(f => ({ ...f, arrival: v })); setStep1Errors(e => ({ ...e, arrival: undefined })); }}
-                        onSelect={r => { setForm(f => ({ ...f, arrival: r.label })); setCoords(c => ({ ...c, arr: r })); setStep1Errors(e => ({ ...e, arrival: undefined })); }}
-                        placeholder="Adresse d'arrivée..."
-                      />
-                      {step1Errors.arrival && <p className="mt-1 text-xs text-red-400">{step1Errors.arrival}</p>}
-                    </div>
-
-                    {/* Real-time price estimate */}
-                    {priceEstimate !== null && distanceKm !== null && (
-                      <div className="rounded-xl bg-sapphire-600/10 border border-sapphire-500/20 overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-3">
-                          <div>
-                            <p className="text-xs text-sapphire-400 uppercase tracking-wide font-medium mb-0.5">Tarif estimatif</p>
-                            <p className="text-2xl font-bold text-white">{priceEstimate}€ <span className="text-xs font-normal text-noir-400">TTC</span></p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-noir-500">Acompte (20%)</p>
-                            <p className="text-base font-semibold text-sapphire-300">{Math.round(priceEstimate * 0.2)}€</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 px-4 py-2 border-t border-sapphire-500/10 bg-sapphire-600/5">
-                          <Navigation className="w-3 h-3 text-sapphire-400" />
-                          <p className="text-xs text-noir-400">{distanceKm} km estimés · {PRICE_KM.toFixed(2).replace('.', ',')}€/km</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <button onClick={goToStep2} className="w-full btn-primary flex items-center justify-center gap-2 py-3 mt-6">
-                    Suivant <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* STEP 2 — Quand ? */}
-              {wizardStep === 2 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-5 text-center">Quand partez-vous ?</h3>
-
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-noir-400 mb-1.5">Date de départ</label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500" />
-                          <input
-                            value={form.date}
-                            onChange={e => { setForm(f => ({ ...f, date: e.target.value })); setStep2Errors(er => ({ ...er, date: undefined })); }}
-                            type="date" min={today} className="input-field pl-9"
-                          />
-                        </div>
-                        {step2Errors.date && <p className="mt-1 text-xs text-red-400">{step2Errors.date}</p>}
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-noir-400 mb-1.5">Heure de départ</label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500" />
-                          <input
-                            value={form.time}
-                            onChange={e => { setForm(f => ({ ...f, time: e.target.value })); setStep2Errors(er => ({ ...er, time: undefined })); }}
-                            type="time" className="input-field pl-9"
-                          />
-                        </div>
-                        {step2Errors.time && <p className="mt-1 text-xs text-red-400">{step2Errors.time}</p>}
-                      </div>
-                    </div>
-
-                    {form.type === 'round_trip' && (
-                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                        <div>
-                          <label className="block text-xs font-medium text-noir-400 mb-1.5">Date retour</label>
-                          <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500" />
-                            <input
-                              value={form.returnDate}
-                              onChange={e => { setForm(f => ({ ...f, returnDate: e.target.value })); setStep2Errors(er => ({ ...er, returnDate: undefined })); }}
-                              type="date" min={form.date || today} className="input-field pl-9"
-                            />
-                          </div>
-                          {step2Errors.returnDate && <p className="mt-1 text-xs text-red-400">{step2Errors.returnDate}</p>}
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-noir-400 mb-1.5">Heure retour</label>
-                          <div className="relative">
-                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500" />
-                            <input
-                              value={form.returnTime}
-                              onChange={e => { setForm(f => ({ ...f, returnTime: e.target.value })); setStep2Errors(er => ({ ...er, returnTime: undefined })); }}
-                              type="time" className="input-field pl-9"
-                            />
-                          </div>
-                          {step2Errors.returnTime && <p className="mt-1 text-xs text-red-400">{step2Errors.returnTime}</p>}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Passengers */}
-                    <div>
-                      <label className="block text-xs font-medium text-noir-400 mb-2">Passagers</label>
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => setForm(f => ({ ...f, passengers: Math.max(1, f.passengers - 1) }))}
-                          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold transition-colors"
-                        >−</button>
-                        <div className="flex-1 text-center">
-                          <span className="text-2xl font-bold text-white">{form.passengers}</span>
-                          <span className="text-xs text-noir-400 ml-2">passager{form.passengers > 1 ? 's' : ''}</span>
-                        </div>
-                        <button
-                          onClick={() => setForm(f => ({ ...f, passengers: Math.min(5, f.passengers + 1) }))}
-                          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold transition-colors"
-                        >+</button>
-                      </div>
-                    </div>
-
-                    {/* Luggage */}
-                    <div>
-                      <label className="block text-xs font-medium text-noir-400 mb-2">Bagages</label>
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => setForm(f => ({ ...f, luggage: Math.max(0, f.luggage - 1) }))}
-                          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold transition-colors"
-                        >−</button>
-                        <div className="flex-1 text-center">
-                          <span className="text-2xl font-bold text-white">{form.luggage}</span>
-                          <span className="text-xs text-noir-400 ml-2">bagage{form.luggage > 1 ? 's' : ''}</span>
-                        </div>
-                        <button
-                          onClick={() => setForm(f => ({ ...f, luggage: Math.min(6, f.luggage + 1) }))}
-                          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold transition-colors"
-                        >+</button>
-                      </div>
-                    </div>
-
-                    {/* Flight number — shown when an airport is detected */}
-                    {isAirport && (
-                      <div className="rounded-xl bg-sapphire-600/5 border border-sapphire-500/20 p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Plane className="w-4 h-4 text-sapphire-400" />
-                          <label className="text-xs font-semibold text-sapphire-300 uppercase tracking-wide">Transfert aéroport détecté</label>
-                        </div>
-                        <p className="text-xs text-noir-400 mb-3">Votre numéro de vol permet au chauffeur de suivre les retards en temps réel.</p>
-                        <input
-                          type="text"
-                          value={form.flightNumber}
-                          onChange={e => setForm(f => ({ ...f, flightNumber: e.target.value.toUpperCase() }))}
-                          placeholder="Ex : AF1234, EZY3321, FR7788..."
-                          className="input-field uppercase tracking-widest font-mono text-sm"
-                          maxLength={8}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3 mt-6">
-                    <button onClick={() => setWizardStep(1)} className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3">
-                      ← Retour
-                    </button>
-                    <button onClick={goToStep3} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3">
-                      Suivant <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3 — Récapitulatif */}
-              {wizardStep === 3 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-5 text-center">Récapitulatif</h3>
-
-                  <div className="rounded-xl bg-white/[0.03] border border-white/8 divide-y divide-white/5 mb-5">
-                    <div className="px-4 py-3 flex items-start gap-3">
-                      <MapPin className="w-4 h-4 text-sapphire-400 mt-0.5 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-noir-500 mb-0.5">Itinéraire</p>
-                        <p className="text-sm text-white font-medium truncate">{form.departure}</p>
-                        <p className="text-xs text-noir-400 mt-0.5">→ {form.arrival}</p>
-                      </div>
-                    </div>
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <Calendar className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs text-noir-500 mb-0.5">Date &amp; heure</p>
-                        <p className="text-sm text-white font-medium">{form.date} à {form.time}</p>
-                        {form.type === 'round_trip' && form.returnDate && (
-                          <p className="text-xs text-noir-400 mt-0.5">Retour : {form.returnDate} à {form.returnTime}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <Users className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs text-noir-500 mb-0.5">Passagers &amp; bagages</p>
-                        <p className="text-sm text-white font-medium">{form.passengers} passager{form.passengers > 1 ? 's' : ''} · {form.luggage} bagage{form.luggage > 1 ? 's' : ''}</p>
-                      </div>
-                    </div>
-                    {form.flightNumber && (
-                      <div className="px-4 py-3 flex items-center gap-3">
-                        <Plane className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs text-noir-500 mb-0.5">Numéro de vol</p>
-                          <p className="text-sm text-white font-mono font-bold">{form.flightNumber}</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <Car className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs text-noir-500 mb-0.5">Type de trajet</p>
-                        <p className="text-sm text-white font-medium">
-                          {form.type === 'one_way' ? 'Aller simple' : form.type === 'round_trip' ? 'Aller-retour' : 'Mise à disposition'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {priceEstimate !== null && distanceKm !== null ? (
-                    <div className="rounded-xl bg-sapphire-600/10 border border-sapphire-500/20 overflow-hidden mb-5">
-                      <div className="flex items-center justify-between px-5 py-4">
-                        <div>
-                          <p className="text-xs text-sapphire-400 uppercase tracking-wide font-medium mb-0.5">Prix estimé</p>
-                          <p className="text-3xl font-bold text-sapphire-300">{priceEstimate}€ <span className="text-sm font-normal text-noir-400">TTC</span></p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-noir-500">Acompte (20%)</p>
-                          <p className="text-lg font-semibold text-white">{Math.round(priceEstimate * 0.2)}€</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 px-5 py-2 border-t border-sapphire-500/10 bg-sapphire-600/5">
-                        <Navigation className="w-3.5 h-3.5 text-sapphire-400" />
-                        <p className="text-xs text-noir-400">{distanceKm} km estimés · {PRICE_KM.toFixed(2).replace('.', ',')}€/km</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl bg-sapphire-600/10 border border-sapphire-500/20 px-4 py-3 mb-5 text-center">
-                      <p className="text-sm text-noir-400">Prix sur devis (adresses sans coordonnées précises)</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3 mb-3">
-                    <button onClick={() => handleBook(false)} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3">
-                      <Car className="w-4 h-4" /> Réserver
-                    </button>
-                    <button onClick={() => handleBook(true)} className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3">
-                      <Send className="w-4 h-4" /> Demander un devis
-                    </button>
-                  </div>
-
-                  <button onClick={() => setWizardStep(2)} className="w-full text-sm text-noir-500 hover:text-noir-300 transition-colors py-1">
-                    ← Retour
-                  </button>
-                </div>
-              )}
-
-              <div className="mt-5 flex items-center justify-center gap-4 text-xs text-noir-500">
-                <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Paiement sécurisé</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Confirmation immédiate</span>
-                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Assistance 24/7</span>
-              </div>
-            </div>
-
-            <div className="mt-4 text-center text-sm text-noir-500">
-              Besoin d'aide ? <a href={`tel:${PHONE}`} className="text-sapphire-400 hover:underline">{PHONE}</a>
-            </div>
+          <div className="mt-4 text-center text-sm text-noir-500">
+            Besoin d'''aide ? <a href={`tel:${PHONE}`} className="text-sapphire-400 hover:underline">{PHONE}</a>
           </div>
         </div>
       </section>
@@ -730,7 +331,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {destinations.map((d) => (
-              <button key={`${d.from}-${d.to}`} onClick={() => { setForm({ ...form, departure: d.from, arrival: d.to }); scrollTo('booking'); }}
+              <button key={`${d.from}-${d.to}`} onClick={() => scrollTo('booking')}
                 className="glass rounded-xl p-5 text-left hover:glow-sapphire transition-all duration-300 group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
@@ -924,8 +525,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4 text-sm">Destinations</h4>
               <ul className="space-y-2">
-                {[['VTC Toulon','Toulon'], ['VTC Hyères','Hyères'], ['VTC Saint-Tropez','Saint-Tropez'], ['VTC Fréjus','Fréjus']].map(([label, city]) => (
-                  <li key={label}><button onClick={() => { setForm(f => ({ ...f, departure: city })); scrollTo('booking'); }} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{label}</button></li>
+                {['VTC Toulon', 'VTC Hyères', 'VTC Saint-Tropez', 'VTC Fréjus'].map((label) => (
+                  <li key={label}><button onClick={() => scrollTo('booking')} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{label}</button></li>
                 ))}
               </ul>
             </div>
