@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 
-export type ClientAuthMethod = 'email' | 'phone';
-
 export interface ClientSession {
   id: string;
   email?: string;
@@ -18,40 +16,43 @@ export async function getClientSession(): Promise<ClientSession | null> {
   };
 }
 
-const APP_URL = (import.meta.env.VITE_APP_URL as string) || 'https://ambassadeur-des-vtc.fr';
+export async function signInWithPassword(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { ok: false, error: translateError(error.message) };
+  return { ok: true };
+}
 
-export async function sendMagicLink(email: string): Promise<{ ok: boolean; error?: string }> {
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+  firstName = '',
+  lastName = '',
+): Promise<{ ok: boolean; error?: string; needsConfirmation?: boolean }> {
+  const APP_URL = (import.meta.env.VITE_APP_URL as string) || 'https://ambassadeur-des-vtc.fr';
   const origin = window.location.hostname === 'localhost' ? APP_URL : window.location.origin;
-  const { error } = await supabase.auth.signInWithOtp({
+
+  const { data, error } = await supabase.auth.signUp({
     email,
+    password,
     options: {
       emailRedirectTo: `${origin}/#/client/dashboard`,
+      data: { first_name: firstName, last_name: lastName },
     },
   });
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  if (error) return { ok: false, error: translateError(error.message) };
+
+  // If session is null after signUp, email confirmation is required
+  const needsConfirmation = !data.session;
+  return { ok: true, needsConfirmation };
 }
 
-export async function sendSmsOtp(phone: string): Promise<{ ok: boolean; error?: string }> {
-  // Format phone to E.164
-  const formatted = formatPhone(phone);
-  if (!formatted) return { ok: false, error: 'Numéro de téléphone invalide' };
-
-  const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
-}
-
-export async function verifySmsOtp(phone: string, token: string): Promise<{ ok: boolean; error?: string }> {
-  const formatted = formatPhone(phone);
-  if (!formatted) return { ok: false, error: 'Numéro invalide' };
-
-  const { error } = await supabase.auth.verifyOtp({
-    phone: formatted,
-    token,
-    type: 'sms',
+export async function resetPassword(email: string): Promise<{ ok: boolean; error?: string }> {
+  const APP_URL = (import.meta.env.VITE_APP_URL as string) || 'https://ambassadeur-des-vtc.fr';
+  const origin = window.location.hostname === 'localhost' ? APP_URL : window.location.origin;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/#/client/dashboard`,
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateError(error.message) };
   return { ok: true };
 }
 
@@ -59,28 +60,30 @@ export async function clientSignOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-// Format French phone numbers to E.164
-function formatPhone(phone: string): string | null {
-  const clean = phone.replace(/[\s\-\.]/g, '');
-  if (clean.startsWith('+')) return clean;
-  if (clean.startsWith('0') && clean.length === 10) return '+33' + clean.slice(1);
-  if (clean.startsWith('33') && clean.length === 11) return '+' + clean;
-  return null;
+function translateError(msg: string): string {
+  if (msg.includes('Invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if (msg.includes('Email not confirmed')) return 'Confirmez votre email avant de vous connecter.';
+  if (msg.includes('User already registered')) return 'Un compte existe déjà avec cet email.';
+  if (msg.includes('Password should be at least')) return 'Le mot de passe doit contenir au moins 6 caractères.';
+  if (msg.includes('Unable to validate email')) return 'Adresse email invalide.';
+  return msg;
 }
 
 // Create or link a client record when they first authenticate
 export async function ensureClientRecord(session: ClientSession): Promise<void> {
-  const { data } = await supabase
+  const { data: existing } = await supabase
     .from('clients')
     .select('id')
     .eq('email', session.email ?? '')
     .maybeSingle();
 
-  if (!data) {
-    // Create a minimal client record
+  if (!existing) {
+    // Fetch user metadata (first_name / last_name set during signUp)
+    const { data: { user } } = await supabase.auth.getUser();
+    const meta = user?.user_metadata ?? {};
     await supabase.from('clients').insert({
-      first_name: '',
-      last_name: '',
+      first_name: meta.first_name ?? '',
+      last_name: meta.last_name ?? '',
       email: session.email ?? '',
       phone: session.phone ?? '',
       status: 'new',
