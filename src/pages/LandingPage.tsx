@@ -152,7 +152,7 @@ export default function LandingPage() {
       arrLng: coords.arr?.lng ?? null,
       isQuote,
     }));
-    window.location.href = '/client/login';
+    window.location.href = '/#/client/login';
   };
 
   const scrollTo = (id: string) => {
