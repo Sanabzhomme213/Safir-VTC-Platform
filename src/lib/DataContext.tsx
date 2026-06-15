@@ -158,13 +158,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       supabase.from('promo_codes').select('*').order('created_at', { ascending: false }),
       supabase.from('settings').select('*'),
     ]).then(([c, r, s, e, co, lr, pc, st]) => {
-      if (c.data?.length) setClients(c.data);
-      if (r.data?.length) setReservations(r.data);
-      if (s.data?.length) setSeoPages(s.data);
-      if (e.data?.length) setEmailLogs(e.data);
-      if (co.data?.length) setConciergeOffers(co.data);
-      if (lr.data?.length) setLoyaltyRules(lr.data);
-      if (pc.data?.length) setPromoCodes(pc.data);
+      if (c.error) console.error('[DataContext] clients:', c.error.message);
+      if (r.error) console.error('[DataContext] reservations:', r.error.message);
+      if (c.data !== null) setClients(c.data);
+      if (r.data !== null) setReservations(r.data);
+      if (s.data !== null) setSeoPages(s.data);
+      if (e.data !== null) setEmailLogs(e.data);
+      if (co.data !== null) setConciergeOffers(co.data);
+      if (lr.data !== null) setLoyaltyRules(lr.data);
+      if (pc.data !== null) setPromoCodes(pc.data);
       if (st.data?.length) {
         const merged: Record<string, unknown> = {};
         for (const item of st.data) {

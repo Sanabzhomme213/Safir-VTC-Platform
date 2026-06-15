@@ -23,7 +23,12 @@ export async function login(
     sessionStorage.setItem(SESSION_KEY, '1');
     // Aussi connecter Supabase Auth si disponible (pour les RLS)
     if (isSupabaseConfigured()) {
-      supabase.auth.signInWithPassword({ email, password }).catch(() => {});
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) console.warn('[auth] Supabase sign-in failed (RLS may block data):', error.message);
+      } catch (e) {
+        console.warn('[auth] Supabase sign-in error:', e);
+      }
     }
     return { ok: true };
   }

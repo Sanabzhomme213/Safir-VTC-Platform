@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, MapPin, Calendar, Clock, Users, Briefcase,
-  ChevronDown, Check, Plus, Loader2, Navigation, AlertCircle, CreditCard
+  ChevronDown, Check, Plus, Loader2, Navigation, AlertCircle, CreditCard,
+  Car, ArrowRight,
 } from 'lucide-react';
 import {
   formatCurrency, formatDate, generateBookingNumber,
@@ -252,122 +253,132 @@ export default function ReservationsPage() {
             </div>
           </div>
 
-          <div className="card overflow-hidden p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    {['N°', 'Date', 'Client', 'Trajet', 'Type', 'Montant', 'Statut', ''].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-noir-400 uppercase tracking-wider">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr><td colSpan={8} className="px-4 py-10 text-center text-noir-500">Aucune réservation trouvée</td></tr>
-                  ) : filtered.flatMap(r => [
-                    <tr
-                      key={r.id}
-                      onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                      className="border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
-                    >
-                      <td className="px-4 py-3 font-mono text-sapphire-400 font-medium text-xs">{r.booking_number}</td>
-                      <td className="px-4 py-3 text-noir-300 whitespace-nowrap">{formatDate(r.ride_date)}</td>
-                      <td className="px-4 py-3 text-white font-medium">{getClientName(r.client_id)}</td>
-                      <td className="px-4 py-3 text-noir-400 max-w-[200px] truncate">
-                        {r.departure_address.split(',')[0]} → {r.arrival_address.split(',')[0]}
-                      </td>
-                      <td className="px-4 py-3 text-noir-300">{rideTypeLabel[r.ride_type]}</td>
-                      <td className="px-4 py-3 font-semibold text-white">{formatCurrency(r.total_price)}</td>
-                      <td className="px-4 py-3">
+          <div className="space-y-3">
+            {filtered.length === 0 ? (
+              <div className="card text-center py-14">
+                <Car className="w-10 h-10 text-noir-700 mx-auto mb-3" />
+                <p className="text-noir-400 font-medium">Aucune réservation trouvée</p>
+                <p className="text-noir-600 text-sm mt-1">Modifiez votre recherche ou créez une nouvelle réservation</p>
+                <button
+                  onClick={() => setActiveTab('new')}
+                  className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-sm font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Nouvelle réservation
+                </button>
+              </div>
+            ) : filtered.map(r => (
+              <div key={r.id} className="card p-0 overflow-hidden hover:border-white/10 transition-all cursor-pointer" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+                {/* Card header */}
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-sapphire-600/15 border border-sapphire-500/20 flex items-center justify-center shrink-0">
+                      <Car className="w-5 h-5 text-sapphire-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-sapphire-400 text-xs font-bold">{r.booking_number}</span>
                         <span className={`badge ${reservationStatusColor[r.status]}`}>{reservationStatusLabel[r.status]}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <ChevronDown className={`w-4 h-4 text-noir-500 transition-transform ${expandedId === r.id ? 'rotate-180' : ''}`} />
-                      </td>
-                    </tr>,
-                    expandedId === r.id ? (
-                      <tr key={`${r.id}-detail`} className="border-b border-white/5 bg-white/[0.01]">
-                        <td colSpan={8} className="px-4 py-5">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-                            <div>
-                              <p className="text-noir-500 text-xs mb-1">Départ</p>
-                              <p className="text-white">{r.departure_address}</p>
-                            </div>
-                            <div>
-                              <p className="text-noir-500 text-xs mb-1">Arrivée</p>
-                              <p className="text-white">{r.arrival_address}</p>
-                            </div>
-                            <div>
-                              <p className="text-noir-500 text-xs mb-1">Distance / Durée</p>
-                              <p className="text-white">{r.distance_km} km · {r.duration_min} min</p>
-                            </div>
-                            <div>
-                              <p className="text-noir-500 text-xs mb-1">Acompte</p>
-                              <p className="text-white">{formatCurrency(r.deposit_amount)} ({r.deposit_percentage}%)</p>
-                            </div>
-                            <div>
-                              <p className="text-noir-500 text-xs mb-1">Passagers / Bagages</p>
-                              <p className="text-white">{r.passengers} pax · {r.luggage} bag.</p>
-                            </div>
-                            {r.flight_number && (
-                              <div>
-                                <p className="text-noir-500 text-xs mb-1">Vol</p>
-                                <p className="text-sapphire-400 font-mono">{r.flight_number}</p>
-                              </div>
-                            )}
-                            {r.notes && (
-                              <div className="col-span-2">
-                                <p className="text-noir-500 text-xs mb-1">Notes</p>
-                                <p className="text-white">{r.notes}</p>
-                              </div>
-                            )}
-                          </div>
-                          {/* Payment buttons */}
-                          <div className="flex gap-2 flex-wrap mb-3">
-                            {r.status === 'pending' && r.deposit_amount > 0 && (
-                              <button
-                                onClick={e => { e.stopPropagation(); setPaymentModal({ reservation: r, type: 'deposit', amount: r.deposit_amount }); }}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-xs font-bold transition-colors"
-                              >
-                                <CreditCard className="w-3.5 h-3.5" />
-                                Encaisser acompte {formatCurrency(r.deposit_amount)}
-                              </button>
-                            )}
-                            {r.status === 'deposit_paid' && (
-                              <button
-                                onClick={e => { e.stopPropagation(); setPaymentModal({ reservation: r, type: 'balance', amount: r.total_price - r.deposit_amount }); }}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors"
-                              >
-                                <CreditCard className="w-3.5 h-3.5" />
-                                Encaisser solde {formatCurrency(r.total_price - r.deposit_amount)}
-                              </button>
-                            )}
-                          </div>
-                          {/* Status buttons */}
-                          <div className="flex gap-2 flex-wrap">
-                            {(['pending','deposit_paid','confirmed','completed','cancelled'] as const).map(s => (
-                              <button
-                                key={s}
-                                onClick={e => { e.stopPropagation(); handleStatusChange(r.id, s); }}
-                                disabled={r.status === s}
-                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border ${
-                                  r.status === s
-                                    ? 'bg-sapphire-600/20 text-sapphire-300 border-sapphire-500/30 cursor-default'
-                                    : 'bg-white/5 text-noir-300 border-white/10 hover:bg-white/10'
-                                }`}
-                              >
-                                {reservationStatusLabel[s]}
-                              </button>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ) : null
-                  ])}
-                </tbody>
-              </table>
-            </div>
+                        {r.is_quote && <span className="badge bg-amber-500/15 text-amber-400 border-amber-500/20">Devis</span>}
+                      </div>
+                      <p className="text-white font-medium text-sm mt-0.5">{getClientName(r.client_id)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-white font-bold">{formatCurrency(r.total_price)}</p>
+                      <p className="text-noir-500 text-xs">{formatDate(r.ride_date)} · {r.ride_time?.slice(0,5)}</p>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-noir-500 transition-transform duration-200 ${expandedId === r.id ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+
+                {/* Route bar */}
+                <div className="px-5 pb-3 flex items-center gap-2 text-sm">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-noir-300 truncate">{r.departure_address.split(',')[0]}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-noir-600 shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span className="text-noir-300 truncate">{r.arrival_address.split(',')[0]}</span>
+                  <span className="text-noir-600 text-xs ml-auto shrink-0">{rideTypeLabel[r.ride_type]}</span>
+                </div>
+
+                {/* Expanded detail */}
+                {expandedId === r.id && (
+                  <div className="border-t border-white/5 px-5 py-4 bg-white/[0.01]" onClick={e => e.stopPropagation()}>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                      <div>
+                        <p className="text-noir-500 text-xs mb-1">Départ complet</p>
+                        <p className="text-white text-xs">{r.departure_address}</p>
+                      </div>
+                      <div>
+                        <p className="text-noir-500 text-xs mb-1">Arrivée complète</p>
+                        <p className="text-white text-xs">{r.arrival_address}</p>
+                      </div>
+                      <div>
+                        <p className="text-noir-500 text-xs mb-1">Distance · Durée</p>
+                        <p className="text-white">{r.distance_km} km · {r.duration_min} min</p>
+                      </div>
+                      <div>
+                        <p className="text-noir-500 text-xs mb-1">Acompte</p>
+                        <p className="text-white">{formatCurrency(r.deposit_amount)} <span className="text-noir-500">({r.deposit_percentage}%)</span></p>
+                      </div>
+                      <div>
+                        <p className="text-noir-500 text-xs mb-1">Passagers · Bagages</p>
+                        <p className="text-white flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-noir-500" />{r.passengers} pax · {r.luggage} bag.</p>
+                      </div>
+                      {r.flight_number && (
+                        <div>
+                          <p className="text-noir-500 text-xs mb-1">N° Vol</p>
+                          <p className="text-sapphire-400 font-mono font-bold">{r.flight_number}</p>
+                        </div>
+                      )}
+                      {r.notes && (
+                        <div className="col-span-2">
+                          <p className="text-noir-500 text-xs mb-1">Notes</p>
+                          <p className="text-white text-xs">{r.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {r.status === 'pending' && r.deposit_amount > 0 && (
+                        <button
+                          onClick={() => setPaymentModal({ reservation: r, type: 'deposit', amount: r.deposit_amount })}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-xs font-bold transition-colors shadow-lg shadow-sapphire-600/20"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          Encaisser acompte {formatCurrency(r.deposit_amount)}
+                        </button>
+                      )}
+                      {r.status === 'deposit_paid' && (
+                        <button
+                          onClick={() => setPaymentModal({ reservation: r, type: 'balance', amount: r.total_price - r.deposit_amount })}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-lg shadow-emerald-600/20"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          Encaisser solde {formatCurrency(r.total_price - r.deposit_amount)}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {(['pending','deposit_paid','confirmed','completed','cancelled'] as const).map(s => (
+                        <button
+                          key={s}
+                          onClick={() => handleStatusChange(r.id, s)}
+                          disabled={r.status === s}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                            r.status === s
+                              ? 'bg-sapphire-600/20 text-sapphire-300 border-sapphire-500/30 cursor-default'
+                              : 'bg-white/5 text-noir-300 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          {reservationStatusLabel[s]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
