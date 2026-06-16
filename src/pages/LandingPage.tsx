@@ -587,8 +587,15 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4 text-sm">Destinations</h4>
               <ul className="space-y-2">
-                {['VTC Toulon', 'VTC Hyères', 'VTC Saint-Tropez', 'VTC Fréjus'].map((label) => (
-                  <li key={label}><button onClick={() => scrollTo('booking')} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{label}</button></li>
+                {[
+                  ['VTC Toulon', '/vtc/vtc-toulon'],
+                  ['VTC Hyères', '/vtc/vtc-hyeres'],
+                  ['VTC Saint-Tropez', '/vtc/vtc-saint-tropez'],
+                  ['VTC Fréjus', '/vtc/vtc-frejus'],
+                  ['Transfert Aéroport Nice', '/vtc/vtc-aeroport-nice-cote-dazur'],
+                  ['Toutes nos destinations', '/vtc'],
+                ].map(([label, href]) => (
+                  <li key={label}><NavLink to={href} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{label}</NavLink></li>
                 ))}
               </ul>
             </div>

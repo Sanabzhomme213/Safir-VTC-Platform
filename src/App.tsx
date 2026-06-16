@@ -24,6 +24,8 @@ import SettingsPage from './pages/Settings';
 import LoginPage from './pages/Login';
 import ClientLoginPage from './pages/ClientLogin';
 import ClientSpacePage from './pages/ClientSpace';
+import SeoLandingPage from './pages/SeoLandingPage';
+import SeoIndexPage from './pages/SeoIndexPage';
 
 import { isAuthenticated, logout } from './lib/auth';
 import { DataProvider } from './lib/DataContext';
@@ -239,6 +241,8 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/vtc" element={<SeoIndexPage />} />
+        <Route path="/vtc/:slug" element={<SeoLandingPage />} />
 
         {/* Client space */}
         <Route path="/client/login" element={<ClientLoginPage />} />

@@ -2,17 +2,70 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="apple-touch-icon" href="/icon.png" />
+    <link rel="shortcut icon" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Ambassadeur VTC" />
-    <meta name="description" content="Chauffeur VTC premium dans le Var et la Côte d'Azur. Transferts aéroport Nice, Toulon, Marseille. Tesla Model Y 2026. Réservation instantanée." />
+    <meta name="apple-mobile-web-app-title" content="L'Ambassadeur des VTC" />
+    <meta name="description" content="Chauffeur VTC premium dans le Var et la Côte d'Azur. Transferts aéroport Nice, Toulon, Marseille. Tesla Model Y 2026. Réservation instantanée, sans création de compte." />
+    <meta name="keywords" content="VTC Toulon, VTC Var, chauffeur privé Côte d'Azur, transfert aéroport Nice, transfert aéroport Toulon, VTC Hyères, VTC Saint-Tropez, chauffeur VTC premium" />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="L'Ambassadeur des VTC" />
+    <link rel="canonical" href="https://ambassadeur-des-vtc.fr/" />
     <title>L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur</title>
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ambassadeur-des-vtc.fr/" />
+    <meta property="og:site_name" content="L'Ambassadeur des VTC" />
+    <meta property="og:title" content="L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur" />
+    <meta property="og:description" content="Chauffeur VTC premium dans le Var et la Côte d'Azur. Transferts aéroport Nice, Toulon, Marseille. Tesla Model Y 2026. Réservation instantanée." />
+    <meta property="og:image" content="https://ambassadeur-des-vtc.fr/icon.png" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur" />
+    <meta name="twitter:description" content="Chauffeur VTC premium dans le Var et la Côte d'Azur. Transferts aéroport Nice, Toulon, Marseille." />
+    <meta name="twitter:image" content="https://ambassadeur-des-vtc.fr/icon.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- LocalBusiness structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TaxiService",
+      "name": "L'Ambassadeur des VTC",
+      "image": "https://ambassadeur-des-vtc.fr/icon.png",
+      "url": "https://ambassadeur-des-vtc.fr/",
+      "telephone": "+33633828394",
+      "priceRange": "€€",
+      "areaServed": ["Toulon", "Hyères", "Saint-Tropez", "Fréjus", "Draguignan", "Var", "Côte d'Azur"],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Toulon",
+        "addressRegion": "Var",
+        "addressCountry": "FR"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        "opens": "00:00",
+        "closes": "23:59"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "200"
+      }
+    }
+    </script>
   </head>
   <body class="bg-noir-950 text-white antialiased">
     <div id="root"></div>

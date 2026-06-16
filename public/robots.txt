@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ambassadeur-des-vtc.fr/sitemap.xml
