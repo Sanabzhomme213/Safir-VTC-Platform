@@ -214,7 +214,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
         arrLat: coords.arr?.lat ?? null, arrLng: coords.arr?.lng ?? null,
         flightNumber: form.flightNumber || null, isQuote,
       }));
-      window.location.href = '/#/client/login';
+      window.location.href = '/client/login';
       return;
     }
 
@@ -318,7 +318,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
               <button onClick={resetBooking} className="w-full btn-primary flex items-center justify-center gap-2 py-3">
                 Faire une nouvelle réservation
               </button>
-              <a href="/#/client/login" className="block text-center text-xs text-noir-500 hover:text-sapphire-400 transition-colors py-1">
+              <a href="/client/login" className="block text-center text-xs text-noir-500 hover:text-sapphire-400 transition-colors py-1">
                 Créer un compte pour suivre vos réservations →
               </a>
             </div>

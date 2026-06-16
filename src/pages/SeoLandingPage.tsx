@@ -65,12 +65,12 @@ export default function SeoLandingPage() {
         canonical.setAttribute('rel', 'canonical');
         document.head.appendChild(canonical);
       }
-      canonical.setAttribute('href', `https://ambassadeur-des-vtc.fr/#/vtc/${page.slug}`);
+      canonical.setAttribute('href', `https://ambassadeur-des-vtc.fr/vtc/${page.slug}`);
     }
     return () => { document.title = "L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur"; };
   }, [page]);
 
-  const scrollToBooking = () => { window.location.href = '/#/'; setTimeout(() => document.getElementById('booking')?.scrollIntoView(), 300); };
+  const scrollToBooking = () => { window.location.href = '/'; setTimeout(() => document.getElementById('booking')?.scrollIntoView(), 300); };
 
   if (page === 'loading') {
     return (

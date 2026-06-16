@@ -37,7 +37,7 @@ export default function ClientLoginPage() {
     setLoading(true); setError('');
     const { ok, error: err } = await signInWithPassword(email, password);
     setLoading(false);
-    if (ok) window.location.replace('/#/client/dashboard');
+    if (ok) window.location.replace('/client/dashboard');
     else setError(err ?? 'Erreur de connexion');
   };
 
@@ -50,7 +50,7 @@ export default function ClientLoginPage() {
     setLoading(false);
     if (!ok) { setError(err ?? 'Erreur lors de la création du compte'); return; }
     if (needsConfirmation) setMode('confirm');
-    else window.location.replace('/#/client/dashboard');
+    else window.location.replace('/client/dashboard');
   };
 
   const handleForgot = async () => {

@@ -31,7 +31,7 @@ export default function SeoIndexPage() {
     return () => { document.title = "L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur"; };
   }, []);
 
-  const scrollToBooking = () => { window.location.href = '/#/'; setTimeout(() => document.getElementById('booking')?.scrollIntoView(), 300); };
+  const scrollToBooking = () => { window.location.href = '/'; setTimeout(() => document.getElementById('booking')?.scrollIntoView(), 300); };
 
   const groups: Record<string, SeoPage[]> = { city: [], airport: [], station: [], transfer: [] };
   for (const p of pages) (groups[p.page_type] ??= []).push(p);

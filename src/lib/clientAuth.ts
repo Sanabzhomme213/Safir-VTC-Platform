@@ -35,7 +35,7 @@ export async function signUpWithPassword(
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/#/client/dashboard`,
+      emailRedirectTo: `${origin}/client/dashboard`,
       data: { first_name: firstName, last_name: lastName },
     },
   });
@@ -50,7 +50,7 @@ export async function resetPassword(email: string): Promise<{ ok: boolean; error
   const APP_URL = (import.meta.env.VITE_APP_URL as string) || 'https://ambassadeur-des-vtc.fr';
   const origin = window.location.hostname === 'localhost' ? APP_URL : window.location.origin;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/#/client/dashboard`,
+    redirectTo: `${origin}/client/dashboard`,
   });
   if (error) return { ok: false, error: translateError(error.message) };
   return { ok: true };
