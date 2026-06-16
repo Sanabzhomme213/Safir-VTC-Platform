@@ -2,12 +2,16 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   MapPin, ArrowRight, ArrowUpDown, Calendar, Clock, Users, Luggage,
   Plane, CheckCircle, Loader2, Navigation, Car, Send, Shield, Phone,
+  User, Mail, AlertCircle,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import AddressAutocomplete, { type AddressResult } from './AddressAutocomplete';
 import { calculatePrice } from '../lib/distance';
+import { supabase } from '../lib/supabase';
+import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
+import { sendSms } from '../lib/smsService';
 
 // Fix Vite bundler breaking default icon paths
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
@@ -95,6 +99,11 @@ export default function BookingSection({ onScrollRequest }: Props) {
   const [routeLoading, setRouteLoading] = useState(false);
   const [step1Errors, setStep1Errors] = useState<{ departure?: string; arrival?: string }>({});
   const [step2Errors, setStep2Errors] = useState<{ date?: string; time?: string; returnDate?: string; returnTime?: string }>({});
+  const [contact, setContact] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const [contactErrors, setContactErrors] = useState<{ firstName?: string; phone?: string }>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [bookingResult, setBookingResult] = useState<{ bookingNumber: string; isQuote: boolean } | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -156,27 +165,110 @@ export default function BookingSection({ onScrollRequest }: Props) {
     setCoords(c => ({ dep: c.arr, arr: c.dep }));
   };
 
-  const handleBook = (isQuote = false) => {
-    localStorage.setItem('pending_booking', JSON.stringify({
+  const handleBook = async (isQuote = false) => {
+    const errors: typeof contactErrors = {};
+    if (!contact.firstName.trim()) errors.firstName = 'Indiquez votre prénom';
+    if (!contact.phone.trim()) errors.phone = 'Indiquez votre numéro de téléphone';
+    setContactErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setSubmitting(true);
+    setSubmitError('');
+
+    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) ?? '';
+    const configured = supabaseUrl.startsWith('https://') && !supabaseUrl.includes('your-project');
+
+    const payload = {
+      firstName: contact.firstName.trim(),
+      lastName: contact.lastName.trim(),
+      email: contact.email.trim() || null,
+      phone: contact.phone.trim(),
       departure: form.departure,
+      departureLat: coords.dep?.lat ?? null,
+      departureLng: coords.dep?.lng ?? null,
       arrival: form.arrival,
+      arrivalLat: coords.arr?.lat ?? null,
+      arrivalLng: coords.arr?.lng ?? null,
       date: form.date,
       time: form.time,
-      passengers: String(form.passengers),
-      luggage: String(form.luggage),
+      passengers: form.passengers,
+      luggage: form.luggage,
       type: form.type,
+      distanceKm,
+      durationMin,
+      priceEstimate,
+      flightNumber: form.flightNumber || null,
       returnDate: form.returnDate || null,
       returnTime: form.returnTime || null,
-      priceEstimate,
-      distanceKm,
-      depLat: coords.dep?.lat ?? null,
-      depLng: coords.dep?.lng ?? null,
-      arrLat: coords.arr?.lat ?? null,
-      arrLng: coords.arr?.lng ?? null,
-      flightNumber: form.flightNumber || null,
       isQuote,
-    }));
-    window.location.href = '/#/client/login';
+    };
+
+    if (!configured) {
+      // Demo mode (no Supabase configured) — keep legacy flow via client login
+      localStorage.setItem('pending_booking', JSON.stringify({
+        departure: form.departure, arrival: form.arrival, date: form.date, time: form.time,
+        passengers: String(form.passengers), luggage: String(form.luggage), type: form.type,
+        returnDate: form.returnDate || null, returnTime: form.returnTime || null,
+        priceEstimate, distanceKm,
+        depLat: coords.dep?.lat ?? null, depLng: coords.dep?.lng ?? null,
+        arrLat: coords.arr?.lat ?? null, arrLng: coords.arr?.lng ?? null,
+        flightNumber: form.flightNumber || null, isQuote,
+      }));
+      window.location.href = '/#/client/login';
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-booking', { body: payload });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const { client, reservation } = data;
+
+      // Fire-and-forget confirmations — booking is already secured regardless of outcome
+      try {
+        const settings = loadPublicSettings();
+        if (client.email) {
+          const html = buildConfirmationEmail({
+            clientName: [client.first_name, client.last_name].filter(Boolean).join(' ') || client.email,
+            bookingNumber: reservation.booking_number,
+            date: reservation.ride_date,
+            time: reservation.ride_time,
+            from: reservation.departure_address,
+            to: reservation.arrival_address,
+            amount: `${reservation.total_price}€`,
+            companyName: settings.company_name || "L'Ambassadeur des VTC",
+            companyPhone: settings.company_phone || '+33 6 33 82 83 94',
+            flightNumber: reservation.flight_number ?? undefined,
+          });
+          sendEmail(
+            { to: client.email, subject: `Confirmation réservation ${reservation.booking_number}`, html },
+            supabaseUrl,
+          );
+        }
+        if (client.phone) {
+          const msg = isQuote
+            ? `${settings.company_name || "L'Ambassadeur des VTC"} - Votre devis ${reservation.booking_number}\n${reservation.departure_address.split(',')[0]} -> ${reservation.arrival_address.split(',')[0]}\nMontant estimé : ${reservation.total_price}€\nContact : ${settings.company_phone || '+33 6 33 82 83 94'}`
+            : `${settings.company_name || "L'Ambassadeur des VTC"} - Réservation confirmée !\nN° ${reservation.booking_number}\nLe ${reservation.ride_date} à ${reservation.ride_time}\nMontant : ${reservation.total_price}€\nContact : ${settings.company_phone || '+33 6 33 82 83 94'}`;
+          sendSms(client.phone, msg);
+        }
+      } catch { /* confirmations are best-effort */ }
+
+      setBookingResult({ bookingNumber: reservation.booking_number, isQuote });
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Une erreur est survenue. Réessayez ou appelez-nous directement.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetBooking = () => {
+    setWizardStep(1);
+    setForm({ departure: '', arrival: '', date: '', time: '', passengers: 1, luggage: 0, type: 'one_way', returnDate: '', returnTime: '', flightNumber: '' });
+    setCoords({ dep: null, arr: null });
+    setContact({ firstName: '', lastName: '', email: '', phone: '' });
+    setContactErrors({});
+    setBookingResult(null);
+    setSubmitError('');
   };
 
   const typeLabel = form.type === 'one_way' ? 'Aller simple' : form.type === 'round_trip' ? 'Aller-retour' : 'Mise à disposition';
@@ -186,6 +278,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
       {/* LEFT PANEL */}
       <div className="bg-noir-950 p-5 sm:p-8 lg:p-10 flex flex-col order-1">
         {/* Step indicator */}
+        {!bookingResult && (
         <div className="flex items-center justify-center mb-8">
           {([1, 2, 3] as const).map((step, idx) => (
             <div key={step} className="flex items-center">
@@ -204,9 +297,36 @@ export default function BookingSection({ onScrollRequest }: Props) {
             </div>
           ))}
         </div>
+        )}
+
+        {/* SUCCESS — booking confirmed */}
+        {bookingResult && (
+          <div key="success" className="flex-1 flex flex-col items-center justify-center text-center animate-slide-up py-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mb-5">
+              <CheckCircle className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">
+              {bookingResult.isQuote ? 'Devis envoyé !' : 'Réservation confirmée !'}
+            </h3>
+            <p className="text-noir-300 text-sm mb-1">
+              Numéro : <span className="text-sapphire-300 font-mono font-semibold">{bookingResult.bookingNumber}</span>
+            </p>
+            <p className="text-noir-500 text-xs mb-7 max-w-xs leading-relaxed">
+              Vous allez recevoir un email et un SMS de confirmation avec tous les détails de votre trajet.
+            </p>
+            <div className="w-full space-y-2.5">
+              <button onClick={resetBooking} className="w-full btn-primary flex items-center justify-center gap-2 py-3">
+                Faire une nouvelle réservation
+              </button>
+              <a href="/#/client/login" className="block text-center text-xs text-noir-500 hover:text-sapphire-400 transition-colors py-1">
+                Créer un compte pour suivre vos réservations →
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* STEP 1 — Votre trajet */}
-        {wizardStep === 1 && (
+        {!bookingResult && wizardStep === 1 && (
           <div key="step1" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Votre trajet</h3>
 
@@ -260,7 +380,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
         )}
 
         {/* STEP 2 — Quand ? */}
-        {wizardStep === 2 && (
+        {!bookingResult && wizardStep === 2 && (
           <div key="step2" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Quand ?</h3>
 
@@ -360,7 +480,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
         )}
 
         {/* STEP 3 — Récapitulatif */}
-        {wizardStep === 3 && (
+        {!bookingResult && wizardStep === 3 && (
           <div key="step3" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Récapitulatif</h3>
 
@@ -431,11 +551,55 @@ export default function BookingSection({ onScrollRequest }: Props) {
               </div>
             )}
 
+            {/* Contact info — no account required */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/8 p-4 mb-5 space-y-3">
+              <p className="text-xs font-medium text-noir-400 mb-1">Vos coordonnées <span className="text-noir-600">(pour la confirmation)</span></p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500 pointer-events-none" />
+                    <input value={contact.firstName}
+                      onChange={e => { setContact(c => ({ ...c, firstName: e.target.value })); setContactErrors(er => ({ ...er, firstName: undefined })); }}
+                      placeholder="Prénom" className="input-field pl-9" autoComplete="given-name" />
+                  </div>
+                  {contactErrors.firstName && <p className="mt-1 text-xs text-red-400">{contactErrors.firstName}</p>}
+                </div>
+                <div>
+                  <input value={contact.lastName}
+                    onChange={e => setContact(c => ({ ...c, lastName: e.target.value }))}
+                    placeholder="Nom" className="input-field" autoComplete="family-name" />
+                </div>
+              </div>
+              <div>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500 pointer-events-none" />
+                  <input value={contact.phone} type="tel"
+                    onChange={e => { setContact(c => ({ ...c, phone: e.target.value })); setContactErrors(er => ({ ...er, phone: undefined })); }}
+                    placeholder="Téléphone" className="input-field pl-9" autoComplete="tel" />
+                </div>
+                {contactErrors.phone && <p className="mt-1 text-xs text-red-400">{contactErrors.phone}</p>}
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-500 pointer-events-none" />
+                <input value={contact.email} type="email"
+                  onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                  placeholder="Email (optionnel)" className="input-field pl-9" autoComplete="email" />
+              </div>
+            </div>
+
+            {submitError && (
+              <div className="flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 mb-4">
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-300">{submitError}</p>
+              </div>
+            )}
+
             <div className="space-y-3">
-              <button onClick={() => handleBook(false)} className="w-full btn-primary flex items-center justify-center gap-2 py-3.5 text-base">
-                <Car className="w-4 h-4" /> Réserver maintenant
+              <button onClick={() => handleBook(false)} disabled={submitting} className="w-full btn-primary flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-60">
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Car className="w-4 h-4" />}
+                {submitting ? 'Réservation en cours...' : 'Réserver maintenant'}
               </button>
-              <button onClick={() => handleBook(true)} className="w-full btn-secondary flex items-center justify-center gap-2 py-3">
+              <button onClick={() => handleBook(true)} disabled={submitting} className="w-full btn-secondary flex items-center justify-center gap-2 py-3 disabled:opacity-60">
                 <Send className="w-4 h-4" /> Demander un devis
               </button>
             </div>
@@ -446,7 +610,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
               <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Assistance 24/7</span>
             </div>
 
-            <button onClick={() => setWizardStep(2)} className="mt-3 w-full text-sm text-noir-500 hover:text-noir-300 transition-colors py-1">← Retour</button>
+            <button onClick={() => setWizardStep(2)} disabled={submitting} className="mt-3 w-full text-sm text-noir-500 hover:text-noir-300 transition-colors py-1 disabled:opacity-50">← Retour</button>
           </div>
         )}
       </div>
