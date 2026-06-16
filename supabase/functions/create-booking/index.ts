@@ -14,6 +14,23 @@ function generateBookingNumber(): string {
   return `SAF-${y}${m}${d}-${rand}`;
 }
 
+async function notifyAdmin(text: string): Promise<void> {
+  try {
+    const adminPhone = Deno.env.get('ADMIN_PHONE');
+    const apiKey = Deno.env.get('VONAGE_API_KEY');
+    const apiSecret = Deno.env.get('VONAGE_API_SECRET');
+    const from = Deno.env.get('VONAGE_FROM') ?? 'SafirVTC';
+    if (!adminPhone || !apiKey || !apiSecret) return;
+
+    const to = adminPhone.replace(/[\s\-\+\.]/g, '').replace(/^0/, '33');
+    await fetch('https://rest.nexmo.com/sms/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, from, to, text, type: 'unicode' }),
+    });
+  } catch { /* admin notification is best-effort, never blocks the booking */ }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -117,6 +134,13 @@ serve(async (req) => {
     const resRows = await resRes.json();
     if (!resRes.ok) throw new Error(resRows?.message ?? 'Erreur création réservation');
     const reservation = Array.isArray(resRows) ? resRows[0] : resRows;
+
+    // Notify the admin immediately — don't wait for the deposit to be paid
+    const clientName = [firstName, lastName].filter(Boolean).join(' ') || phone || email || 'Client';
+    const label = isQuote ? 'DEVIS' : 'NOUVELLE RESA';
+    await notifyAdmin(
+      `${label} ! ${clientName}\n${departure.split(',')[0]} -> ${arrival.split(',')[0]}\nLe ${date} a ${time}\n${price}€ - N°${reservation.booking_number}\nTel client: ${phone || email}`
+    );
 
     return new Response(JSON.stringify({ client, reservation }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
