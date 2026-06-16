@@ -103,7 +103,7 @@ export async function sendAiMessage(messages: ChatMessage[]): Promise<string> {
   // 2. Fallback : Edge Function Supabase (si configurée)
   const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) ?? '';
   const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ?? '';
-  if (supabaseUrl.startsWith('https://') && !supabaseUrl.includes('your-project') && supabaseKey.startsWith('eyJ')) {
+  if (supabaseUrl.startsWith('https://') && !supabaseUrl.includes('your-project') && (supabaseKey.startsWith('eyJ') || supabaseKey.startsWith('sb_publishable_'))) {
     try {
       const { supabase } = await import('./supabase');
       const { data, error } = await supabase.functions.invoke('ai-chat', { body: { messages } });

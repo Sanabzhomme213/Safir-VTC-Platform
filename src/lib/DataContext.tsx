@@ -17,11 +17,13 @@ export { generateBookingNumber };
 const isSupabaseReady = (): boolean => {
   const url = (import.meta.env.VITE_SUPABASE_URL as string) ?? '';
   const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ?? '';
-  // URL must be a real Supabase URL; key must be a JWT (eyJ...) — not a placeholder
+  // URL must be a real Supabase URL; key must be a real key — not a placeholder.
+  // Supabase now issues two key formats: legacy JWT anon keys (eyJ...) and the
+  // newer publishable keys (sb_publishable_...). Accept either.
   return (
     url.startsWith('https://') &&
     !url.includes('your-project') &&
-    key.startsWith('eyJ')
+    (key.startsWith('eyJ') || key.startsWith('sb_publishable_'))
   );
 };
 
