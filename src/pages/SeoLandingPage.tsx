@@ -209,7 +209,7 @@ export default function SeoLandingPage() {
                 <MapPin className="w-4 h-4" /> Voir sur Google Maps
               </a>
               <a
-                href="https://share.google/MM8dMQbO3vWL5mso5"
+                href="https://g.page/r/CbiEE78WCroOEBM/review"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm flex items-center justify-center gap-2 py-3 rounded-xl border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-colors font-medium"

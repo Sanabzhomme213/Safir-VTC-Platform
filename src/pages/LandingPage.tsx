@@ -618,7 +618,7 @@ export default function LandingPage() {
                 </li>
                 <li>
                   <a
-                    href="https://share.google/MM8dMQbO3vWL5mso5"
+                    href="https://g.page/r/CbiEE78WCroOEBM/review"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-yellow-500 hover:text-yellow-400 transition-colors"
