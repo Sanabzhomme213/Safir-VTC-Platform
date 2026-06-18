@@ -266,6 +266,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         setSeoPages(p => [...p, data]);
       }
+      if (page.is_published) {
+        fetch('https://www.google.com/ping?sitemap=https://ambassadeur-des-vtc.fr/sitemap.xml', { mode: 'no-cors' }).catch(() => {});
+      }
       return;
     }
     if (existing) {

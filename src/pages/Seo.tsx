@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Plus, Edit2, Eye, Trash2, CheckCircle, Circle, Wand2 } from 'lucide-react';
+import { Plus, Edit2, Eye, Trash2, CheckCircle, Circle, Wand2, Send } from 'lucide-react';
 import { type SeoPage as SeoPageT, seoPageTypeLabel, formatDate } from '../lib/supabase';
 import { useData } from '../lib/DataContext';
 
@@ -13,6 +13,7 @@ export default function SeoPage() {
     page_type: 'city', title: '', meta_description: '', h1: '', content: '', faq: [], is_published: false, slug: '',
   });
   const [locationName, setLocationName] = useState('');
+  const [pingStatus, setPingStatus] = useState<'idle' | 'sending' | 'done'>('idle');
 
   const filteredPages = pages.filter((page) => {
     const typeMatch = filterType === 'all' || page.page_type === filterType;
@@ -88,6 +89,19 @@ export default function SeoPage() {
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> Generer une page
+        </button>
+        <button
+          onClick={async () => {
+            setPingStatus('sending');
+            await fetch('https://www.google.com/ping?sitemap=https://ambassadeur-des-vtc.fr/sitemap.xml', { mode: 'no-cors' }).catch(() => {});
+            setPingStatus('done');
+            setTimeout(() => setPingStatus('idle'), 3000);
+          }}
+          className="btn-secondary flex items-center gap-2"
+          disabled={pingStatus === 'sending'}
+        >
+          <Send size={16} />
+          {pingStatus === 'sending' ? 'Envoi...' : pingStatus === 'done' ? 'Soumis à Google ✓' : 'Ping Google'}
         </button>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value as any)} className="input-field w-auto">
           <option value="all">Tous les types</option>
