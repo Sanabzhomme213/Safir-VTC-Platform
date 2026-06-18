@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, Car, Users, FileText, Search, Bot, Mail, Globe,
-  Settings, Star, Plane, Gift, ShoppingBag, ChevronLeft, ChevronRight,
+  Settings, Star, Plane, Gift, ChevronLeft, ChevronRight,
   Menu, X, Shield, ExternalLink, LogOut
 } from 'lucide-react';
 
@@ -18,7 +18,6 @@ import FlightsPage from './pages/Flights';
 import EmailsPage from './pages/Emails';
 import LoyaltyPage from './pages/Loyalty';
 import PromoPage from './pages/Promo';
-import ConciergePage from './pages/Concierge';
 import ClientPortalPage from './pages/ClientPortal';
 import SettingsPage from './pages/Settings';
 import LoginPage from './pages/Login';
@@ -44,7 +43,6 @@ const navItems: NavItem[] = [
   { icon: Mail, label: 'Emails', path: '/admin/emails' },
   { icon: Star, label: 'Fidélité', path: '/admin/loyalty' },
   { icon: Gift, label: 'Codes Promo', path: '/admin/promo' },
-  { icon: ShoppingBag, label: 'Concierge', path: '/admin/concierge' },
   { icon: Shield, label: 'Espace Client', path: '/admin/client-portal' },
   { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
 ];
@@ -207,7 +205,6 @@ function AdminLayout({ onLogout }: { onLogout: () => void }) {
               <Route path="emails" element={<EmailsPage />} />
               <Route path="loyalty" element={<LoyaltyPage />} />
               <Route path="promo" element={<PromoPage />} />
-              <Route path="concierge" element={<ConciergePage />} />
               <Route path="client-portal" element={<ClientPortalPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
