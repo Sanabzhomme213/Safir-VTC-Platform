@@ -19,7 +19,7 @@ function loadPublicSettings() {
 const _s = loadPublicSettings();
 const PHONE = _s.company_phone || '+33 6 33 82 83 94';
 const EMAIL = _s.company_email || 'contact@ambassadeur-vtc.fr';
-const GOOGLE_REVIEW_URL = _s.google_review_url || 'https://www.google.com/maps/search/?api=1&query=vtc+var+ambassadeur';
+const GOOGLE_REVIEW_URL = 'https://g.page/r/CbiEE78WCroOEBM/review';
 const INSTAGRAM_URL = _s.instagram_url || '';
 const FACEBOOK_URL = _s.facebook_url || '';
 
@@ -39,12 +39,6 @@ const destinations = [
   { from: 'Draguignan', to: 'Aéroport Nice Côte d\'Azur', price: '130€', duration: '1h25' },
 ];
 
-const reviews = [
-  { name: 'Jean-Pierre M.', rating: 5, text: "Service impeccable depuis Toulon jusqu'à Nice. Chauffeur ponctuel, véhicule luxueux. Je recommande vivement L'Ambassadeur des VTC pour tous vos transferts.", date: 'Il y a 2 jours' },
-  { name: 'Marie L.', rating: 5, text: 'Prise en charge à l\'aéroport de Nice parfaite malgré mon vol retardé. Le chauffeur avait suivi le vol et était là à l\'heure. Parfait !', date: 'Il y a 5 jours' },
-  { name: 'Thomas B.', rating: 5, text: "Client régulier depuis 1 an pour mes déplacements pro sur la Côte d'Azur. L'Ambassadeur des VTC, c'est la garantie d'un service premium à chaque trajet.", date: 'Il y a 1 semaine' },
-  { name: 'Sophie R.', rating: 5, text: 'Transfert Saint-Tropez — Nice exceptionnel. Véhicule haut de gamme, eau et chargeur à disposition. Je ne prends plus le taxi !', date: 'Il y a 2 semaines' },
-];
 
 const faqs = [
   { q: 'Comment réserver un VTC ?', a: 'Utilisez notre formulaire en ligne, appelez-nous ou envoyez un message. Vous recevez une confirmation instantanée par email avec votre numéro de réservation unique.' },
@@ -432,33 +426,33 @@ export default function LandingPage() {
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {reviews.map((r, i) => (
-              <FadeIn key={r.name} delay={i * 80}>
-              <div className="glass rounded-xl p-5 h-full">
-                <StarRating n={r.rating} />
-                <p className="mt-3 text-sm text-noir-300 leading-relaxed">"{r.text}"</p>
-                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">{r.name}</p>
-                    <p className="text-xs text-noir-500">{r.date}</p>
-                  </div>
-                  <div className="w-6 h-6 opacity-40">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="text-white">
-                      <path d="M12 0C5.383 0 0 5.383 0 12c0 6.616 5.383 12 12 12 6.616 0 12-5.384 12-12 0-6.617-5.384-12-12-12z" />
-                    </svg>
-                  </div>
-                </div>
+          <FadeIn className="max-w-xl mx-auto">
+            <div className="glass rounded-2xl p-8 text-center">
+              <div className="flex items-center justify-center gap-1 mb-3">
+                <StarRating n={5} />
               </div>
-              </FadeIn>
-            ))}
-          </div>
-
-          <div className="mt-10 text-center">
-            <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 btn-secondary text-sm">
-              <Star className="w-4 h-4 text-amber-400" /> Laisser un avis Google
-            </a>
-          </div>
+              <p className="text-2xl font-black mb-1">4.9 / 5</p>
+              <p className="text-noir-400 text-sm mb-6">Basé sur nos avis Google vérifiés</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href={GOOGLE_REVIEW_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-colors font-medium px-5 py-3 text-sm"
+                >
+                  ★ Laisser un avis Google
+                </a>
+                <a
+                  href="https://share.google/MM8dMQbO3vWL5mso5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 btn-secondary text-sm px-5 py-3"
+                >
+                  <MapPin className="w-4 h-4" /> Voir notre fiche Google
+                </a>
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
