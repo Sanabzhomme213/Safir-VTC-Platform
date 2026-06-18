@@ -182,13 +182,68 @@ export default function SeoLandingPage() {
           </button>
         </div>
 
+        {/* CONTACT & CARTE */}
+        <div className="mt-10 glass rounded-2xl p-6 lg:p-8">
+          <h2 className="text-lg font-bold mb-5 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-sapphire-400" /> Zone de service &amp; Contact
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+            <ul className="space-y-2 text-sm text-noir-300">
+              <li className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
+                <span>Fréjus, Var (83600) — Côte d'Azur</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
+                <a href={`tel:${PHONE}`} className="hover:text-white transition-colors">{PHONE}</a>
+              </li>
+              <li className="text-xs text-noir-500 pl-6">Disponible 24h/24 — 7j/7</li>
+            </ul>
+            <div className="flex flex-col gap-2">
+              <a
+                href="https://share.google/MM8dMQbO3vWL5mso5"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary text-sm flex items-center justify-center gap-2 py-3"
+              >
+                <MapPin className="w-4 h-4" /> Voir sur Google Maps
+              </a>
+              <a
+                href="https://share.google/MM8dMQbO3vWL5mso5"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm flex items-center justify-center gap-2 py-3 rounded-xl border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-colors font-medium"
+              >
+                ★ Laisser un avis Google
+              </a>
+            </div>
+          </div>
+          <div className="rounded-xl overflow-hidden w-full" style={{ height: 240 }}>
+            <iframe
+              title="L'Ambassadeur des VTC — Fréjus, Var"
+              src="https://maps.google.com/maps?q=Frejus+83600+Var+France&t=&z=13&ie=UTF8&iwloc=&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
+
         <p className="mt-10 text-center text-sm text-noir-500">
           <NavLink to="/vtc" className="hover:text-sapphire-400 transition-colors">← Voir toutes nos destinations</NavLink>
         </p>
       </main>
 
       <footer className="border-t border-white/5 py-8 text-center text-xs text-noir-600">
-        © {new Date().getFullYear()} L'Ambassadeur des VTC — Var &amp; Côte d'Azur
+        <p>© {new Date().getFullYear()} L'Ambassadeur des VTC — Fréjus, Var (83600) &amp; Côte d'Azur</p>
+        <p className="mt-1">
+          <a href={`tel:${PHONE}`} className="hover:text-noir-400 transition-colors">{PHONE}</a>
+          {' · '}
+          <a href="https://share.google/MM8dMQbO3vWL5mso5" target="_blank" rel="noopener noreferrer" className="hover:text-noir-400 transition-colors">Google Maps</a>
+        </p>
       </footer>
     </div>
   );

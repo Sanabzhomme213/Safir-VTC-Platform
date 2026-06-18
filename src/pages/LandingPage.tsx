@@ -588,10 +588,10 @@ export default function LandingPage() {
               <h4 className="font-semibold mb-4 text-sm">Destinations</h4>
               <ul className="space-y-2">
                 {[
-                  ['VTC Toulon', '/vtc/vtc-toulon'],
-                  ['VTC Hyères', '/vtc/vtc-hyeres'],
-                  ['VTC Saint-Tropez', '/vtc/vtc-saint-tropez'],
                   ['VTC Fréjus', '/vtc/vtc-frejus'],
+                  ['VTC Saint-Raphaël', '/vtc/vtc-saint-raphael'],
+                  ['VTC Cannes', '/vtc/vtc-cannes'],
+                  ['VTC Saint-Tropez', '/vtc/vtc-saint-tropez'],
                   ['Transfert Aéroport Nice', '/vtc/vtc-aeroport-nice-cote-dazur'],
                   ['Toutes nos destinations', '/vtc'],
                 ].map(([label, href]) => (
@@ -604,8 +604,28 @@ export default function LandingPage() {
               <ul className="space-y-2">
                 <li><a href={`tel:${PHONE}`} className="text-sm text-noir-500 hover:text-noir-300 transition-colors">Tel: {PHONE}</a></li>
                 <li><a href={`mailto:${EMAIL}`} className="text-sm text-noir-500 hover:text-noir-300 transition-colors">Email: {EMAIL}</a></li>
-                <li><span className="text-sm text-noir-500">Var &amp; Côte d'Azur</span></li>
-                <li><span className="text-sm text-noir-500">Disponible 24/7</span></li>
+                <li><span className="text-sm text-noir-500">Fréjus, Var (83600)</span></li>
+                <li><span className="text-sm text-noir-500">Var &amp; Côte d'Azur — 24/7</span></li>
+                <li>
+                  <a
+                    href="https://share.google/MM8dMQbO3vWL5mso5"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-sapphire-500 hover:text-sapphire-400 transition-colors"
+                  >
+                    Voir sur Google Maps →
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://share.google/MM8dMQbO3vWL5mso5"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-yellow-500 hover:text-yellow-400 transition-colors"
+                  >
+                    ★ Laisser un avis Google
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
