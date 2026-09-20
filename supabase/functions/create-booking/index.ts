@@ -14,7 +14,7 @@ function generateBookingNumber(): string {
   return `SAF-${y}${m}${d}-${rand}`;
 }
 
-async function notifyAdmin(text: string): Promise<void> {
+async function notifyAdminSms(text: string): Promise<void> {
   try {
     const adminPhone = Deno.env.get('ADMIN_PHONE');
     const apiKey = Deno.env.get('VONAGE_API_KEY');
@@ -27,6 +27,25 @@ async function notifyAdmin(text: string): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, from, to, text, type: 'unicode' }),
+    });
+  } catch { /* admin notification is best-effort, never blocks the booking */ }
+}
+
+async function notifyAdminEmail(subject: string, html: string): Promise<void> {
+  try {
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    const apiKey = Deno.env.get('RESEND_API_KEY');
+    if (!adminEmail || !apiKey) return;
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `${Deno.env.get('RESEND_FROM_NAME') ?? 'Safir VTC'} <${Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'}>`,
+        to: [adminEmail],
+        subject,
+        html,
+      }),
     });
   } catch { /* admin notification is best-effort, never blocks the booking */ }
 }
@@ -135,12 +154,27 @@ serve(async (req) => {
     if (!resRes.ok) throw new Error(resRows?.message ?? 'Erreur création réservation');
     const reservation = Array.isArray(resRows) ? resRows[0] : resRows;
 
-    // Notify the admin immediately — don't wait for the deposit to be paid
+    // Notify the admin immediately — the reservation is unpaid ("pending") until
+    // someone (usually the admin, via a payment link) collects the deposit.
     const clientName = [firstName, lastName].filter(Boolean).join(' ') || phone || email || 'Client';
-    const label = isQuote ? 'DEVIS' : 'NOUVELLE RESA';
-    await notifyAdmin(
-      `${label} ! ${clientName}\n${departure.split(',')[0]} -> ${arrival.split(',')[0]}\nLe ${date} a ${time}\n${price}€ - N°${reservation.booking_number}\nTel client: ${phone || email}`
-    );
+    const label = isQuote ? 'DEVIS' : 'NOUVELLE RESA (en attente de paiement)';
+    await Promise.all([
+      notifyAdminSms(
+        `${label} ! ${clientName}\n${departure.split(',')[0]} -> ${arrival.split(',')[0]}\nLe ${date} a ${time}\n${price}€ - N°${reservation.booking_number}\nTel client: ${phone || email}`
+      ),
+      notifyAdminEmail(
+        `${isQuote ? 'Nouveau devis' : 'Nouvelle réservation en attente de paiement'} — ${reservation.booking_number}`,
+        `<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
+          <h2 style="margin:0 0 12px">${isQuote ? 'Nouveau devis demandé' : 'Nouvelle réservation — paiement en attente'}</h2>
+          <p><strong>N°</strong> ${reservation.booking_number}</p>
+          <p><strong>Client :</strong> ${clientName} ${phone ? `— ${phone}` : ''} ${email ? `— ${email}` : ''}</p>
+          <p><strong>Trajet :</strong> ${departure} → ${arrival}</p>
+          <p><strong>Date :</strong> ${date} à ${time}</p>
+          <p><strong>Montant :</strong> ${price}€ ${isQuote ? '' : `(acompte attendu : ${reservationPayload.deposit_amount}€)`}</p>
+          ${isQuote ? '' : `<p style="margin-top:16px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px">Le client n'a pas encore payé. Depuis le dashboard admin (Réservations), utilisez « Envoyer lien de paiement » pour lui envoyer un lien sécurisé par SMS et email.</p>`}
+        </div>`
+      ),
+    ]);
 
     return new Response(JSON.stringify({ client, reservation }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },

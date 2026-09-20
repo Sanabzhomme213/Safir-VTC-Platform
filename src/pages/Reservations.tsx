@@ -2,11 +2,11 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, MapPin, Calendar, Clock, Users, Briefcase,
   ChevronDown, Check, Plus, Loader2, Navigation, AlertCircle, CreditCard,
-  Car, ArrowRight,
+  Car, ArrowRight, Send,
 } from 'lucide-react';
 import {
-  formatCurrency, formatDate, generateBookingNumber,
-  reservationStatusLabel, reservationStatusColor, rideTypeLabel, type Reservation,
+  formatCurrency, formatDate, formatDateTime, generateBookingNumber,
+  reservationStatusLabel, reservationStatusColor, rideTypeLabel, supabase, type Reservation,
 } from '../lib/supabase';
 import { useData } from '../lib/DataContext';
 import { getRouteInfo, calculatePrice } from '../lib/distance';
@@ -33,6 +33,7 @@ export default function ReservationsPage() {
     type: 'deposit' | 'balance';
     amount: number;
   } | null>(null);
+  const [sendingLinkId, setSendingLinkId] = useState<string | null>(null);
 
   // New reservation form
   const [form, setForm] = useState<FormState>({
@@ -172,10 +173,31 @@ export default function ReservationsPage() {
     }
   };
 
+  const handleSendPaymentLink = async (r: Reservation, type: 'deposit' | 'balance') => {
+    setSendingLinkId(r.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-payment-link', {
+        body: { reservationId: r.id, type },
+      });
+      if (error || data?.error) throw new Error(error?.message ?? data?.error ?? 'Erreur');
+      await updateReservation(r.id, { payment_link_sent_at: new Date().toISOString() });
+      showToast('Lien de paiement envoyé par SMS et email');
+    } catch {
+      showToast("Erreur lors de l'envoi du lien", false);
+    } finally {
+      setSendingLinkId(null);
+    }
+  };
+
   const handleStatusChange = async (id: string, status: Reservation['status']) => {
     try {
       await updateReservation(id, { status });
       showToast('Statut mis à jour');
+      if (status === 'completed') {
+        const r = reservations.find(x => x.id === id);
+        const client = r ? clients.find(c => c.id === r.client_id) : undefined;
+        if (client) notifyThankYou(client, settings.company_name);
+      }
     } catch {
       showToast('Erreur lors de la mise à jour', false);
     }
@@ -339,26 +361,49 @@ export default function ReservationsPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2 flex-wrap mb-3">
+                    <div className="flex gap-2 flex-wrap mb-2">
                       {r.status === 'pending' && r.deposit_amount > 0 && (
-                        <button
-                          onClick={() => setPaymentModal({ reservation: r, type: 'deposit', amount: r.deposit_amount })}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-xs font-bold transition-colors shadow-lg shadow-sapphire-600/20"
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          Encaisser acompte {formatCurrency(r.deposit_amount)}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setPaymentModal({ reservation: r, type: 'deposit', amount: r.deposit_amount })}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-xs font-bold transition-colors shadow-lg shadow-sapphire-600/20"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Encaisser acompte {formatCurrency(r.deposit_amount)}
+                          </button>
+                          <button
+                            onClick={() => handleSendPaymentLink(r, 'deposit')}
+                            disabled={sendingLinkId === r.id}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                          >
+                            {sendingLinkId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            Envoyer lien de paiement
+                          </button>
+                        </>
                       )}
                       {r.status === 'deposit_paid' && (
-                        <button
-                          onClick={() => setPaymentModal({ reservation: r, type: 'balance', amount: r.total_price - r.deposit_amount })}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-lg shadow-emerald-600/20"
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          Encaisser solde {formatCurrency(r.total_price - r.deposit_amount)}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setPaymentModal({ reservation: r, type: 'balance', amount: r.total_price - r.deposit_amount })}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-lg shadow-emerald-600/20"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Encaisser solde {formatCurrency(r.total_price - r.deposit_amount)}
+                          </button>
+                          <button
+                            onClick={() => handleSendPaymentLink(r, 'balance')}
+                            disabled={sendingLinkId === r.id}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                          >
+                            {sendingLinkId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            Envoyer lien de paiement
+                          </button>
+                        </>
                       )}
                     </div>
+                    {r.payment_link_sent_at && (
+                      <p className="text-noir-500 text-xs mb-3">Lien de paiement envoyé le {formatDateTime(r.payment_link_sent_at)}</p>
+                    )}
                     <div className="flex gap-2 flex-wrap">
                       {(['pending','deposit_paid','confirmed','completed','cancelled'] as const).map(s => (
                         <button
@@ -600,7 +645,7 @@ export default function ReservationsPage() {
           paymentType={paymentModal.type}
           amount={paymentModal.amount}
           onSuccess={async () => {
-            const newStatus = paymentModal.type === 'deposit' ? 'deposit_paid' : 'completed';
+            const newStatus = paymentModal.type === 'deposit' ? 'deposit_paid' : 'confirmed';
             await updateReservation(paymentModal.reservation.id, { status: newStatus });
             setPaymentModal(null);
             showToast(`Paiement encaissé — réservation ${reservationStatusLabel[newStatus]}`);
@@ -612,8 +657,6 @@ export default function ReservationsPage() {
                 notifyDepositPaid(paymentModal.reservation, client, paymentModal.amount, settings.company_name);
               } else {
                 notifyBalancePaid(paymentModal.reservation, client, settings.company_name);
-                // SMS de remerciement après trajet terminé
-                setTimeout(() => notifyThankYou(client, settings.company_name), 2000);
               }
             }
           }}

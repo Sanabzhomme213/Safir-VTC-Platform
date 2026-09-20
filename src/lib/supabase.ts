@@ -48,6 +48,8 @@ export type Reservation = {
   flight_status: string | null;
   is_quote: boolean;
   notes: string;
+  payment_token?: string | null;
+  payment_link_sent_at?: string | null;
   created_at: string;
   updated_at: string;
   client?: Client;

@@ -260,9 +260,10 @@ export default function BookingSection({ onScrollRequest }: Props) {
       if (isQuote) {
         setBookingResult({ bookingNumber: reservation.booking_number, isQuote: true, depositPaid: false });
       } else {
-        // Reservation is created but stays "pending" until the deposit is paid
+        // Reservation is created and secured regardless of payment — the client
+        // can pay the deposit right away, or wait for the payment link we send
+        // by SMS/email (our team is notified and can also send it manually).
         setPendingPayment({ reservation, client });
-        setShowPaymentModal(true);
       }
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Une erreur est survenue. Réessayez ou appelez-nous directement.');
@@ -362,22 +363,25 @@ export default function BookingSection({ onScrollRequest }: Props) {
           </div>
         )}
 
-        {/* AWAITING PAYMENT — reservation created but deposit not yet paid */}
+        {/* AWAITING PAYMENT — reservation created and secured, deposit not yet paid */}
         {!bookingResult && pendingPayment && (
           <div key="awaiting-payment" className="flex-1 flex flex-col items-center justify-center text-center animate-slide-up py-6">
-            <div className="w-16 h-16 rounded-full bg-amber-500/15 flex items-center justify-center mb-5">
-              <AlertCircle className="w-8 h-8 text-amber-400" />
+            <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mb-5">
+              <CheckCircle className="w-8 h-8 text-emerald-400" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Acompte requis pour confirmer</h3>
+            <h3 className="text-xl font-bold text-white mb-2">Réservation enregistrée !</h3>
             <p className="text-noir-300 text-sm mb-1">
-              Réservation <span className="text-sapphire-300 font-mono font-semibold">{pendingPayment.reservation.booking_number}</span> enregistrée
+              N° <span className="text-sapphire-300 font-mono font-semibold">{pendingPayment.reservation.booking_number}</span>
             </p>
             <p className="text-noir-500 text-xs mb-7 max-w-xs leading-relaxed">
-              Il reste à régler l'acompte de <strong className="text-white">{pendingPayment.reservation.deposit_amount}€</strong> pour confirmer définitivement votre trajet.
+              Vous pouvez régler l'acompte de <strong className="text-white">{pendingPayment.reservation.deposit_amount}€</strong> tout de suite pour confirmer immédiatement, ou attendre le lien de paiement sécurisé que notre équipe vous enverra par SMS et email.
             </p>
             <div className="w-full space-y-2.5">
               <button onClick={() => setShowPaymentModal(true)} className="w-full btn-primary flex items-center justify-center gap-2 py-3.5 text-base">
-                <Shield className="w-4 h-4" /> Payer l'acompte ({pendingPayment.reservation.deposit_amount}€)
+                <Shield className="w-4 h-4" /> Payer l'acompte maintenant ({pendingPayment.reservation.deposit_amount}€)
+              </button>
+              <button onClick={resetBooking} className="w-full btn-secondary flex items-center justify-center gap-2 py-3">
+                Terminer — je paierai via le lien reçu
               </button>
               <a href={`tel:${(loadPublicSettings().company_phone) || '+33633828394'}`} className="block text-center text-xs text-noir-500 hover:text-sapphire-400 transition-colors py-1">
                 Ou réglez par téléphone →

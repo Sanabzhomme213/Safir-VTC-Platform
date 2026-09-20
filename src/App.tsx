@@ -23,6 +23,7 @@ import SettingsPage from './pages/Settings';
 import LoginPage from './pages/Login';
 import ClientLoginPage from './pages/ClientLogin';
 import ClientSpacePage from './pages/ClientSpace';
+import PayReservationPage from './pages/PayReservation';
 import SeoLandingPage from './pages/SeoLandingPage';
 import SeoIndexPage from './pages/SeoIndexPage';
 
@@ -233,6 +234,9 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/vtc" element={<SeoIndexPage />} />
         <Route path="/vtc/:slug" element={<SeoLandingPage />} />
+
+        {/* Payment link — public, token-gated */}
+        <Route path="/payer/:id" element={<PayReservationPage />} />
 
         {/* Client space */}
         <Route path="/client/login" element={<ClientLoginPage />} />
