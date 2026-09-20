@@ -28,7 +28,7 @@ export default function SeoIndexPage() {
       setPages(data ?? []);
       setLoading(false);
     });
-    return () => { document.title = "L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur"; };
+    return () => { document.title = "L'Ambassadeur des VTC — Chauffeur Premium Nord & Pas-de-Calais"; };
   }, []);
 
   const scrollToBooking = () => { window.location.href = '/'; setTimeout(() => document.getElementById('booking')?.scrollIntoView(), 300); };
@@ -67,7 +67,7 @@ export default function SeoIndexPage() {
       <header className="border-b border-white/5 py-12 lg:py-16 text-center">
         <div className="max-w-3xl mx-auto px-4">
           <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Toutes nos destinations</span>
-          <h1 className="text-3xl lg:text-5xl font-black leading-tight mb-5">VTC dans le Var &amp; la Côte d'Azur</h1>
+          <h1 className="text-3xl lg:text-5xl font-black leading-tight mb-5">VTC dans le Nord &amp; le Pas-de-Calais</h1>
           <p className="text-noir-300 text-lg leading-relaxed">Villes, aéroports, gares et trajets desservis par L'Ambassadeur des VTC. Tarif fixe, chauffeur professionnel, réservation en 2 minutes.</p>
         </div>
       </header>
@@ -103,7 +103,7 @@ export default function SeoIndexPage() {
       </main>
 
       <footer className="border-t border-white/5 py-8 text-center text-xs text-noir-600">
-        © {new Date().getFullYear()} L'Ambassadeur des VTC — Var &amp; Côte d'Azur
+        © {new Date().getFullYear()} L'Ambassadeur des VTC — Nord &amp; Pas-de-Calais
       </footer>
     </div>
   );

@@ -18,7 +18,7 @@ interface Props {
 
 async function searchNominatim(query: string): Promise<AddressResult[]> {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=fr,mc&accept-language=fr&addressdetails=1&viewbox=4.5,44.5,8.0,42.8&bounded=0`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=fr,be&accept-language=fr&addressdetails=1&viewbox=1.3,51.1,4.3,49.9&bounded=0`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'AmbassadeurVTC/1.0 contact@ambassadeur-vtc.fr' },
     });
@@ -68,11 +68,11 @@ function formatLabel(label: string): string {
 
 // Popular VTC pickup points for quick selection
 const QUICK_PICKS = [
-  { label: 'Aéroport Nice Côte d\'Azur', lat: 43.6584, lng: 7.2159 },
-  { label: 'Aéroport Toulon-Hyères', lat: 43.0977, lng: 6.1460 },
-  { label: 'Gare de Toulon', lat: 43.1244, lng: 5.9302 },
-  { label: 'Gare de Nice-Ville', lat: 43.7046, lng: 7.2617 },
-  { label: 'Saint-Tropez', lat: 43.2677, lng: 6.6404 },
+  { label: 'Aéroport de Lille-Lesquin', lat: 50.5619, lng: 3.0894 },
+  { label: 'Aéroport de Calais-Dunkerque', lat: 50.9622, lng: 1.9547 },
+  { label: 'Gare de Calais-Ville', lat: 50.9513, lng: 1.8587 },
+  { label: 'Gare de Lille-Flandres', lat: 50.6365, lng: 3.0709 },
+  { label: 'Le Touquet-Paris-Plage', lat: 50.5236, lng: 1.5883 },
 ];
 
 export default function AddressAutocomplete({

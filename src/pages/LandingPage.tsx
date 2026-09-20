@@ -24,19 +24,19 @@ const INSTAGRAM_URL = _s.instagram_url || '';
 const FACEBOOK_URL = _s.facebook_url || '';
 
 const services = [
-  { icon: Plane, label: 'Transfert Aéroport', desc: 'Nice, Toulon, Marseille — suivi de vol en temps réel, prise en charge garantie', price: 'Dès 45€' },
-  { icon: Car, label: 'Transfert Gare', desc: 'Gare de Toulon, Saint-Raphaël, Cannes — accueil personnalisé', price: 'Dès 35€' },
+  { icon: Plane, label: 'Transfert Aéroport', desc: 'Lille, Calais, Dunkerque — suivi de vol en temps réel, prise en charge garantie', price: 'Dès 45€' },
+  { icon: Car, label: 'Transfert Gare', desc: 'Gare de Calais, Boulogne-sur-Mer, Le Touquet — accueil personnalisé', price: 'Dès 35€' },
   { icon: Shield, label: 'Mise à Disposition', desc: 'Chauffeur dédié à l\'heure pour vos événements, soirées, visites', price: 'Dès 45€/h' },
-  { icon: Users, label: 'Transport Corporate', desc: 'Transferts professionnels, séminaires, congrès sur la Côte d\'Azur', price: 'Sur devis' },
+  { icon: Users, label: 'Transport Corporate', desc: 'Transferts professionnels, séminaires, congrès dans le Nord et le Pas-de-Calais', price: 'Sur devis' },
 ];
 
 const destinations = [
-  { from: 'Toulon', to: 'Aéroport Nice Côte d\'Azur', price: '120€', duration: '1h20' },
-  { from: 'Saint-Tropez', to: 'Aéroport Nice Côte d\'Azur', price: '180€', duration: '1h45' },
-  { from: 'Fréjus', to: 'Aéroport Marseille', price: '110€', duration: '1h15' },
-  { from: 'Hyères', to: 'Aéroport Toulon-Hyères', price: '35€', duration: '15min' },
-  { from: 'Toulon', to: 'Monaco', price: '160€', duration: '1h30' },
-  { from: 'Draguignan', to: 'Aéroport Nice Côte d\'Azur', price: '130€', duration: '1h25' },
+  { from: 'Calais', to: 'Aéroport de Lille-Lesquin', price: '120€', duration: '1h20' },
+  { from: 'Le Touquet-Paris-Plage', to: 'Aéroport de Lille-Lesquin', price: '180€', duration: '1h45' },
+  { from: 'Berck-sur-Mer', to: 'Aéroport de Lille-Lesquin', price: '110€', duration: '1h15' },
+  { from: 'Boulogne-sur-Mer', to: 'Aéroport de Calais-Dunkerque', price: '35€', duration: '15min' },
+  { from: 'Calais', to: 'Bruxelles', price: '160€', duration: '1h30' },
+  { from: 'Saint-Omer', to: 'Aéroport de Lille-Lesquin', price: '130€', duration: '1h25' },
 ];
 
 
@@ -46,7 +46,7 @@ const faqs = [
   { q: 'Suivez-vous les vols en cas de retard ?', a: 'Oui, nous suivons tous les vols en temps réel. En cas de retard, votre chauffeur ajuste automatiquement l\'heure de prise en charge sans frais supplémentaires.' },
   { q: 'Quels modes de paiement acceptez-vous ?', a: 'Carte bancaire, Apple Pay, Google Pay. Un acompte de 20% est demandé à la réservation, le solde est réglé après la course.' },
   { q: 'Proposez-vous des tarifs pour les entreprises ?', a: 'Oui, nous proposons des contrats corporate avec facturation mensuelle, tarifs préférentiels et gestion centralisée des courses.' },
-  { q: 'Quelles zones desservez-vous ?', a: 'Toulon, Hyères, Saint-Tropez, Fréjus, Draguignan, et tout le Var. Liaisons vers Nice, Monaco, Marseille et l\'ensemble de la Côte d\'Azur.' },
+  { q: 'Quelles zones desservez-vous ?', a: 'Calais, Boulogne-sur-Mer, Le Touquet-Paris-Plage, Berck-sur-Mer, Saint-Omer, et tout le Pas-de-Calais. Liaisons vers Lille, Bruxelles, Dunkerque et l\'ensemble du Nord.' },
 ];
 
 function StarRating({ n }: { n: number }) {
@@ -194,11 +194,11 @@ export default function LandingPage() {
             <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-5 animate-slide-up">
               Votre chauffeur<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sapphire-400 to-sapphire-200">premium</span><br />
-              <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white/80">dans le Var & la Côte d'Azur</span>
+              <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white/80">dans le Nord & le Pas-de-Calais</span>
             </h1>
 
             <p className="text-base md:text-xl text-noir-300 mb-7 max-w-xl leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Transferts aéroport (Nice, Toulon, Marseille), gare, corporate. Tesla Model Y 2026, chauffeur pro. Confirmation immédiate.
+              Transferts aéroport (Lille, Calais, Dunkerque), gare, corporate. Tesla Model Y 2026, chauffeur pro. Confirmation immédiate.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-10 animate-slide-up" style={{ animationDelay: '0.2s' }}>
@@ -316,7 +316,7 @@ export default function LandingPage() {
             <FadeIn>
               <span className="inline-block px-3 py-1 rounded-full bg-sapphire-600/15 border border-sapphire-500/20 text-sapphire-400 text-xs font-semibold uppercase tracking-widest mb-4">Pourquoi L'Ambassadeur des VTC ?</span>
               <h2 className="text-3xl lg:text-4xl font-bold mb-6">L'excellence comme standard</h2>
-              <p className="text-noir-400 mb-8 leading-relaxed">L'Ambassadeur des VTC, c'est la promesse d'un service VTC premium dans le Var et sur la Côte d'Azur. À bord d'une Tesla Model Y 2026, profitez d'un trajet silencieux, confortable et éco-responsable avec un chauffeur professionnel dédié.</p>
+              <p className="text-noir-400 mb-8 leading-relaxed">L'Ambassadeur des VTC, c'est la promesse d'un service VTC premium dans le Nord et le Pas-de-Calais. À bord d'une Tesla Model Y 2026, profitez d'un trajet silencieux, confortable et éco-responsable avec un chauffeur professionnel dédié.</p>
 
               <div className="space-y-4">
                 {[
@@ -555,7 +555,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-sapphire-600 flex items-center justify-center"><Car className="w-4 h-4 text-white" /></div>
                 <span className="font-bold text-white">L'Ambassadeur <span className="text-sapphire-400">des VTC</span></span>
               </div>
-              <p className="text-sm text-noir-500 mb-4 leading-relaxed">Service de chauffeur privé premium dans le Var et sur la Côte d'Azur. Disponible 24h/24.</p>
+              <p className="text-sm text-noir-500 mb-4 leading-relaxed">Service de chauffeur privé premium dans le Nord et le Pas-de-Calais. Disponible 24h/24.</p>
               <div className="flex gap-3">
                 {INSTAGRAM_URL && (
                   <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-noir-400 hover:text-white hover:bg-white/10 transition">
@@ -582,11 +582,11 @@ export default function LandingPage() {
               <h4 className="font-semibold mb-4 text-sm">Destinations</h4>
               <ul className="space-y-2">
                 {[
-                  ['VTC Fréjus', '/vtc/vtc-frejus'],
-                  ['VTC Saint-Raphaël', '/vtc/vtc-saint-raphael'],
-                  ['VTC Cannes', '/vtc/vtc-cannes'],
-                  ['VTC Saint-Tropez', '/vtc/vtc-saint-tropez'],
-                  ['Transfert Aéroport Nice', '/vtc/vtc-aeroport-nice-cote-dazur'],
+                  ['VTC Calais', '/vtc/vtc-calais'],
+                  ['VTC Boulogne-sur-Mer', '/vtc/vtc-boulogne-sur-mer'],
+                  ['VTC Le Touquet-Paris-Plage', '/vtc/vtc-le-touquet'],
+                  ['VTC Berck-sur-Mer', '/vtc/vtc-berck-sur-mer'],
+                  ['Transfert Aéroport Lille', '/vtc/vtc-aeroport-lille-lesquin'],
                   ['Toutes nos destinations', '/vtc'],
                 ].map(([label, href]) => (
                   <li key={label}><NavLink to={href} className="text-sm text-noir-500 hover:text-noir-300 transition-colors text-left">{label}</NavLink></li>
@@ -598,8 +598,8 @@ export default function LandingPage() {
               <ul className="space-y-2">
                 <li><a href={`tel:${PHONE}`} className="text-sm text-noir-500 hover:text-noir-300 transition-colors">Tel: {PHONE}</a></li>
                 <li><a href={`mailto:${EMAIL}`} className="text-sm text-noir-500 hover:text-noir-300 transition-colors">Email: {EMAIL}</a></li>
-                <li><span className="text-sm text-noir-500">Fréjus, Var (83600)</span></li>
-                <li><span className="text-sm text-noir-500">Var &amp; Côte d'Azur — 24/7</span></li>
+                <li><span className="text-sm text-noir-500">Calais, Pas-de-Calais (62100)</span></li>
+                <li><span className="text-sm text-noir-500">Nord &amp; Pas-de-Calais — 24/7</span></li>
                 <li>
                   <a
                     href="https://share.google/MM8dMQbO3vWL5mso5"
@@ -666,7 +666,7 @@ export default function LandingPage() {
                 Chauffeur VTC indépendant — Carte professionnelle VTC<br />
                 Téléphone : {PHONE}<br />
                 Email : {EMAIL}<br />
-                Zone d'activité : Var &amp; Côte d'Azur, France</p>
+                Zone d'activité : Nord &amp; Pas-de-Calais, France</p>
                 <p><strong className="text-white">Hébergement</strong><br />
                 Vercel Inc. — 340 Pine Street Suite 701, San Francisco, CA 94104, USA</p>
                 <p><strong className="text-white">Responsabilité</strong><br />
@@ -678,7 +678,7 @@ export default function LandingPage() {
                 <p><strong className="text-white">1. Objet</strong><br />
                 Les présentes conditions générales d'utilisation régissent l'accès et l'utilisation du service de réservation en ligne proposé par L'Ambassadeur des VTC.</p>
                 <p><strong className="text-white">2. Services</strong><br />
-                L'Ambassadeur des VTC propose un service de transport privé avec chauffeur (VTC) dans le Var et sur la Côte d'Azur. Les tarifs sont calculés à titre indicatif et peuvent varier selon les conditions réelles de trajet.</p>
+                L'Ambassadeur des VTC propose un service de transport privé avec chauffeur (VTC) dans le Nord et le Pas-de-Calais. Les tarifs sont calculés à titre indicatif et peuvent varier selon les conditions réelles de trajet.</p>
                 <p><strong className="text-white">3. Réservation</strong><br />
                 Toute réservation est confirmée par email ou SMS. Un acompte peut être demandé pour valider la réservation. L'annulation gratuite est possible jusqu'à 24h avant la course.</p>
                 <p><strong className="text-white">4. Responsabilité</strong><br />

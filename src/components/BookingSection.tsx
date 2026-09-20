@@ -679,15 +679,16 @@ export default function BookingSection({ onScrollRequest }: Props) {
       {/* RIGHT — MAP */}
       <div className="relative min-h-[280px] sm:min-h-[340px] lg:min-h-full order-2 bg-noir-900">
         <MapContainer
-          center={[43.12, 5.93]}
+          center={[50.9513, 1.8587]}
           zoom={10}
           zoomControl={false}
           scrollWheelZoom={false}
           style={{ height: '100%', width: '100%', minHeight: '280px', background: '#0a0a0a' }}
         >
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://carto.com/attributions">CartoDB</a>'
+            className="map-tiles-dark"
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <ZoomControl position="bottomright" />
           <MapFitter dep={coords.dep} arr={coords.arr} />
