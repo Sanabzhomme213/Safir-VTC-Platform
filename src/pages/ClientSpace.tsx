@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Car, Calendar, MapPin, Star, LogOut, User, Clock,
   CheckCircle, AlertCircle, ChevronRight, Phone, Mail, Home,
-  ArrowRight, Shield,
+  ArrowRight, Shield, RotateCcw, Bookmark, Plus, X, Trash2, Loader2, Sparkles,
 } from 'lucide-react';
 import { NavLink, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -10,12 +10,25 @@ import {
   formatCurrency, formatDate, reservationStatusLabel, reservationStatusColor,
   generateBookingNumber,
 } from '../lib/supabase';
-import type { Reservation, Client } from '../lib/supabase';
+import type { Reservation, Client, SavedAddress } from '../lib/supabase';
 import { clientSignOut, ensureClientRecord } from '../lib/clientAuth';
 import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
-import { notifyReservationCreated } from '../lib/smsService';
+import { sendSms, notifyReservationCreated } from '../lib/smsService';
+import { calculatePrice } from '../lib/distance';
+import AddressAutocomplete from '../components/AddressAutocomplete';
+import ConfettiBurst from '../components/ConfettiBurst';
 
 type Tab = 'home' | 'reservations' | 'profile';
+
+function loadPublicSettings() {
+  try { return JSON.parse(localStorage.getItem('ambassadeur_settings') ?? '{}'); } catch { return {}; }
+}
+
+const TIERS = [
+  { name: 'Nouveau', rides: 0 },
+  { name: 'Fidèle', rides: 5 },
+  { name: 'VIP', rides: 15 },
+] as const;
 
 export default function ClientSpacePage() {
   const [session, setSession] = useState<{ id: string; email?: string; phone?: string } | null | 'loading'>('loading');
@@ -24,6 +37,25 @@ export default function ClientSpacePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [bookingCreated, setBookingCreated] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [confetti, setConfetti] = useState(false);
+
+  // Quick rebook
+  const [rebook, setRebook] = useState<Reservation | null>(null);
+  const [rebookDate, setRebookDate] = useState('');
+  const [rebookTime, setRebookTime] = useState('');
+  const [rebookSubmitting, setRebookSubmitting] = useState(false);
+  const [rebookError, setRebookError] = useState('');
+
+  // Saved addresses
+  const [addingAddr, setAddingAddr] = useState(false);
+  const [newAddrLabel, setNewAddrLabel] = useState('');
+  const [newAddrValue, setNewAddrValue] = useState('');
+  const [newAddrCoords, setNewAddrCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [savingAddr, setSavingAddr] = useState(false);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500); };
+  const fireConfetti = () => { setConfetti(true); setTimeout(() => setConfetti(false), 1200); };
 
   useEffect(() => {
     async function init() {
@@ -149,14 +181,145 @@ export default function ClientSpacePage() {
   const past = reservations.filter(r => ['completed', 'cancelled'].includes(r.status));
   const completedCount = reservations.filter(r => r.status === 'completed').length;
 
+  const openRebook = (r: Reservation) => {
+    const next = new Date(r.ride_date);
+    next.setDate(next.getDate() + 7);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (next < today) next.setTime(today.getTime() + 24 * 60 * 60 * 1000);
+    setRebookDate(next.toISOString().split('T')[0]);
+    setRebookTime(r.ride_time?.slice(0, 5) || '10:00');
+    setRebookError('');
+    setRebook(r);
+  };
+
+  const confirmRebook = async () => {
+    if (!rebook || !client) return;
+    if (!rebookDate || !rebookTime) { setRebookError('Choisissez une date et une heure'); return; }
+    setRebookSubmitting(true);
+    setRebookError('');
+    try {
+      const s = loadPublicSettings();
+      const price = calculatePrice(rebook.distance_km, rebook.ride_type, {
+        pricing_per_km: parseFloat(s.pricing_per_km) || 1.8,
+        pricing_min: parseFloat(s.pricing_min) || 25,
+        pricing_round_trip_discount: parseFloat(s.pricing_round_trip_discount) || 10,
+        pricing_disposal_hourly: parseFloat(s.pricing_disposal_hourly) || 45,
+      }) || rebook.total_price;
+
+      const { data, error } = await supabase.functions.invoke('create-booking', {
+        body: {
+          firstName: client.first_name, lastName: client.last_name,
+          email: client.email || null, phone: client.phone,
+          departure: rebook.departure_address, departureLat: rebook.departure_lat, departureLng: rebook.departure_lng,
+          arrival: rebook.arrival_address, arrivalLat: rebook.arrival_lat, arrivalLng: rebook.arrival_lng,
+          date: rebookDate, time: rebookTime,
+          passengers: rebook.passengers, luggage: rebook.luggage, type: rebook.ride_type,
+          distanceKm: rebook.distance_km, durationMin: rebook.duration_min, priceEstimate: price,
+          flightNumber: null, returnDate: null, returnTime: null, isQuote: false,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      setReservations(prev => [data.reservation, ...prev]);
+      setRebook(null);
+      fireConfetti();
+      showToast(`Trajet réservé pour le ${formatDate(rebookDate)} ! Un lien de paiement vous sera envoyé.`);
+      setActiveTab('reservations');
+
+      // Best-effort confirmation, mirrors the public booking flow
+      try {
+        const s = loadPublicSettings();
+        const companyName = s.company_name || "L'Ambassadeur des VTC";
+        const companyPhone = s.company_phone || '+33 6 33 82 83 94';
+        if (client.email) {
+          const html = buildConfirmationEmail({
+            clientName: [client.first_name, client.last_name].filter(Boolean).join(' ') || client.email,
+            bookingNumber: data.reservation.booking_number,
+            date: data.reservation.ride_date, time: data.reservation.ride_time,
+            from: data.reservation.departure_address, to: data.reservation.arrival_address,
+            amount: `${data.reservation.total_price}€`, companyName, companyPhone,
+          });
+          sendEmail({ to: client.email, subject: `Confirmation réservation ${data.reservation.booking_number}`, html }, import.meta.env.VITE_SUPABASE_URL as string ?? '');
+        }
+        if (client.phone) {
+          sendSms(client.phone, `${companyName} - Reservation enregistree (N° ${data.reservation.booking_number}).\nIl reste a regler l'acompte de ${data.reservation.deposit_amount}€ pour la confirmer.\nContact : ${companyPhone}`);
+        }
+      } catch { /* best-effort */ }
+    } catch (e) {
+      setRebookError(e instanceof Error ? e.message : 'Une erreur est survenue');
+    } finally {
+      setRebookSubmitting(false);
+    }
+  };
+
+  const addSavedAddress = async () => {
+    if (!client || !newAddrLabel.trim() || !newAddrValue.trim()) return;
+    setSavingAddr(true);
+    try {
+      const entry: SavedAddress = {
+        id: `addr-${Date.now()}`,
+        label: newAddrLabel.trim(),
+        address: newAddrValue.trim(),
+        lat: newAddrCoords?.lat ?? null,
+        lng: newAddrCoords?.lng ?? null,
+      };
+      const next = [...(client.saved_addresses ?? []), entry];
+      const { error } = await supabase.from('clients').update({ saved_addresses: next }).eq('id', client.id);
+      if (error) throw error;
+      setClient({ ...client, saved_addresses: next });
+      setNewAddrLabel(''); setNewAddrValue(''); setNewAddrCoords(null);
+      setAddingAddr(false);
+      showToast('Adresse enregistrée');
+    } catch {
+      showToast("Erreur lors de l'enregistrement");
+    } finally {
+      setSavingAddr(false);
+    }
+  };
+
+  const deleteSavedAddress = async (id: string) => {
+    if (!client) return;
+    const next = (client.saved_addresses ?? []).filter(a => a.id !== id);
+    try {
+      const { error } = await supabase.from('clients').update({ saved_addresses: next }).eq('id', client.id);
+      if (error) throw error;
+      setClient({ ...client, saved_addresses: next });
+    } catch {
+      showToast('Erreur lors de la suppression');
+    }
+  };
+
+  const bookFromAddress = (a: SavedAddress) => {
+    try {
+      localStorage.setItem('prefill_departure', JSON.stringify({ label: a.address, lat: a.lat, lng: a.lng }));
+    } catch {}
+    window.location.href = '/';
+  };
+
   const tabs = [
     { id: 'home' as Tab, label: 'Accueil', icon: Home },
     { id: 'reservations' as Tab, label: 'Courses', icon: Calendar },
     { id: 'profile' as Tab, label: 'Profil', icon: User },
   ];
 
+  const currentTierIdx = completedCount >= 15 ? 2 : completedCount >= 5 ? 1 : 0;
+  const nextTier = TIERS[currentTierIdx + 1];
+  const tierFloor = TIERS[currentTierIdx].rides;
+  const tierProgress = nextTier ? Math.min(100, Math.round(((completedCount - tierFloor) / (nextTier.rides - tierFloor)) * 100)) : 100;
+
   return (
     <div className="min-h-screen bg-noir-950 flex flex-col">
+      {confetti && <ConfettiBurst />}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-900/95 border border-emerald-600/50 text-emerald-200 text-sm font-medium shadow-2xl animate-slide-down max-w-[90%] text-center">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          {toast}
+        </div>
+      )}
+
       {/* Top nav */}
       <nav className="border-b border-white/5 bg-noir-950/90 backdrop-blur-xl sticky top-0 z-30"
            style={{ paddingTop: 'env(safe-area-inset-top)' }}>
@@ -230,6 +393,45 @@ export default function ClientSpacePage() {
                 </div>
               </NavLink>
 
+              {/* Status progress — light gamification */}
+              <div className="glass rounded-2xl p-4 border border-white/8">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <p className="text-xs font-semibold text-white uppercase tracking-wide">
+                      Statut {TIERS[currentTierIdx].name}
+                    </p>
+                  </div>
+                  {nextTier && <p className="text-[11px] text-noir-500">{nextTier.rides - completedCount} trajet{nextTier.rides - completedCount > 1 ? 's' : ''} avant {nextTier.name}</p>}
+                </div>
+                <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-sapphire-500 transition-all duration-700 ease-out"
+                    style={{ width: `${nextTier ? tierProgress : 100}%` }}
+                  />
+                </div>
+                {!nextTier && <p className="text-[11px] text-emerald-400 mt-1.5">⭐ Statut maximum atteint, merci de votre confiance !</p>}
+              </div>
+
+              {/* Saved addresses — quick rebook */}
+              {(client?.saved_addresses?.length ?? 0) > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-white uppercase tracking-wide mb-2">Vos adresses</p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {client!.saved_addresses!.map(a => (
+                      <button
+                        key={a.id}
+                        onClick={() => bookFromAddress(a)}
+                        className="shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-sapphire-500/30 transition-all active:scale-95"
+                      >
+                        <Bookmark className="w-3.5 h-3.5 text-sapphire-400 shrink-0" />
+                        <span className="text-white text-xs font-medium whitespace-nowrap">{a.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Upcoming rides */}
               {upcoming.length > 0 && (
                 <div>
@@ -290,7 +492,7 @@ export default function ClientSpacePage() {
                   {past.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-noir-500 uppercase tracking-widest mb-2 mt-4">Historique · {past.length}</p>
-                      <div className="space-y-3">{past.map(r => <ReservationCard key={r.id} r={r} past />)}</div>
+                      <div className="space-y-3">{past.map(r => <ReservationCard key={r.id} r={r} past onRebook={openRebook} />)}</div>
                     </div>
                   )}
                 </>
@@ -340,6 +542,67 @@ export default function ClientSpacePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Saved addresses */}
+              <div className="glass rounded-2xl border border-white/8 overflow-hidden">
+                <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+                  <p className="font-semibold text-white">Mes adresses</p>
+                  <button
+                    onClick={() => setAddingAddr(a => !a)}
+                    className="flex items-center gap-1 text-xs text-sapphire-400 hover:text-sapphire-300 font-medium"
+                  >
+                    {addingAddr ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    {addingAddr ? 'Annuler' : 'Ajouter'}
+                  </button>
+                </div>
+
+                {addingAddr && (
+                  <div className="px-5 py-4 border-b border-white/5 space-y-3 bg-white/[0.02]">
+                    <input
+                      value={newAddrLabel}
+                      onChange={e => setNewAddrLabel(e.target.value)}
+                      placeholder="Nom (ex: Domicile, Bureau...)"
+                      className="input-field text-sm"
+                    />
+                    <AddressAutocomplete
+                      value={newAddrValue}
+                      onChange={setNewAddrValue}
+                      onSelect={r => { setNewAddrValue(r.label); setNewAddrCoords(r.lat ? { lat: r.lat, lng: r.lng } : null); }}
+                      placeholder="Adresse..."
+                    />
+                    <button
+                      onClick={addSavedAddress}
+                      disabled={savingAddr || !newAddrLabel.trim() || !newAddrValue.trim()}
+                      className="w-full btn-primary py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {savingAddr ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bookmark className="w-4 h-4" />}
+                      Enregistrer
+                    </button>
+                  </div>
+                )}
+
+                {(client?.saved_addresses?.length ?? 0) === 0 && !addingAddr ? (
+                  <div className="px-5 py-6 text-center">
+                    <p className="text-noir-500 text-sm">Aucune adresse enregistrée</p>
+                    <p className="text-noir-600 text-xs mt-1">Gagnez du temps sur vos prochaines réservations</p>
+                  </div>
+                ) : (
+                  client?.saved_addresses?.map(a => (
+                    <div key={a.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5 last:border-0">
+                      <div className="w-9 h-9 rounded-xl bg-sapphire-600/15 flex items-center justify-center shrink-0">
+                        <Bookmark className="w-4 h-4 text-sapphire-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium">{a.label}</p>
+                        <p className="text-noir-500 text-xs truncate">{a.address}</p>
+                      </div>
+                      <button onClick={() => deleteSavedAddress(a.id)} className="text-noir-600 hover:text-red-400 transition-colors shrink-0 p-1">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Contact */}
@@ -425,11 +688,65 @@ export default function ClientSpacePage() {
           })}
         </div>
       </div>
+
+      {/* Quick rebook modal */}
+      {rebook && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-noir-900 border border-white/10 rounded-2xl max-w-md w-full shadow-2xl animate-slide-up">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-sapphire-400" />
+                Refaire ce trajet
+              </h2>
+              <button onClick={() => setRebook(null)} className="text-noir-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="rounded-xl bg-white/[0.03] border border-white/8 p-4 space-y-1.5">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 rounded-full bg-sapphire-500 shrink-0" />
+                  <p className="text-white truncate">{rebook.departure_address.split(',')[0]}</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                  <p className="text-white truncate">{rebook.arrival_address.split(',')[0]}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-noir-400 mb-1.5">Date</label>
+                  <input type="date" value={rebookDate} min={new Date().toISOString().split('T')[0]}
+                    onChange={e => setRebookDate(e.target.value)} className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-xs text-noir-400 mb-1.5">Heure</label>
+                  <input type="time" value={rebookTime} onChange={e => setRebookTime(e.target.value)} className="input-field" />
+                </div>
+              </div>
+
+              {rebookError && (
+                <p className="text-xs text-red-400 flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5 shrink-0" />{rebookError}</p>
+              )}
+
+              <button
+                onClick={confirmRebook}
+                disabled={rebookSubmitting}
+                className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {rebookSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                {rebookSubmitting ? 'Réservation...' : 'Confirmer le trajet'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function ReservationCard({ r, past = false }: { r: Reservation; past?: boolean }) {
+function ReservationCard({ r, past = false, onRebook }: { r: Reservation; past?: boolean; onRebook?: (r: Reservation) => void }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div
@@ -479,6 +796,16 @@ function ReservationCard({ r, past = false }: { r: Reservation; past?: boolean }
         <div className="mx-4 mb-3 flex items-center gap-2 text-xs text-sapphire-300 bg-sapphire-500/10 rounded-xl px-3 py-2.5">
           <Clock className="w-3.5 h-3.5 shrink-0" />
           Confirmée — votre chauffeur sera ponctuel
+        </div>
+      )}
+      {r.status === 'completed' && onRebook && (
+        <div className="mx-4 mb-3">
+          <button
+            onClick={e => { e.stopPropagation(); onRebook(r); }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-sapphire-600/10 border border-sapphire-500/20 text-sapphire-400 text-sm font-medium hover:bg-sapphire-600/20 transition-colors active:scale-[0.98]"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Refaire ce trajet
+          </button>
         </div>
       )}
 

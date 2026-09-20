@@ -46,8 +46,13 @@ export default {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shimmer': 'shimmer 1.5s infinite',
         'bounce-subtle': 'bounceSubtle 2s ease-in-out infinite',
+        'confetti-fall': 'confettiFall 1.1s ease-in forwards',
       },
       keyframes: {
+        confettiFall: {
+          '0%': { transform: 'translateY(0) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateY(220px) rotate(540deg)', opacity: '0' },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },

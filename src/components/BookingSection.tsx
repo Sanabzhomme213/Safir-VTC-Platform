@@ -83,15 +83,29 @@ async function fetchOsrmRoute(dep: AddressResult, arr: AddressResult): Promise<{
   }
 }
 
+function readPrefillDeparture(): { label: string; lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem('prefill_departure');
+    if (!raw) return null;
+    localStorage.removeItem('prefill_departure');
+    const p = JSON.parse(raw);
+    if (!p?.label) return null;
+    return { label: p.label, lat: p.lat ?? 0, lng: p.lng ?? 0 };
+  } catch {
+    return null;
+  }
+}
+
 export default function BookingSection({ onScrollRequest }: Props) {
   void onScrollRequest;
 
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [prefillDep] = useState(() => readPrefillDeparture());
   const [form, setForm] = useState({
-    departure: '', arrival: '', date: '', time: '', passengers: 1, luggage: 0, type: 'one_way',
+    departure: prefillDep?.label ?? '', arrival: '', date: '', time: '', passengers: 1, luggage: 0, type: 'one_way',
     returnDate: '', returnTime: '', flightNumber: '',
   });
-  const [coords, setCoords] = useState<Coords>({ dep: null, arr: null });
+  const [coords, setCoords] = useState<Coords>({ dep: prefillDep && prefillDep.lat ? prefillDep : null, arr: null });
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [durationMin, setDurationMin] = useState<number | null>(null);

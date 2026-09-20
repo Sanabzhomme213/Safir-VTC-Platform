@@ -5,6 +5,14 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export type SavedAddress = {
+  id: string;
+  label: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+};
+
 export type Client = {
   id: string;
   first_name: string;
@@ -15,6 +23,7 @@ export type Client = {
   total_spent: number;
   total_rides: number;
   notes: string;
+  saved_addresses?: SavedAddress[];
   created_at: string;
   updated_at: string;
 };
