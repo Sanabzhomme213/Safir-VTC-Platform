@@ -67,7 +67,7 @@ export default function SeoLandingPage() {
       }
       canonical.setAttribute('href', `https://ambassadeur-des-vtc.fr/vtc/${page.slug}`);
     }
-    return () => { document.title = "L'Ambassadeur des VTC — Chauffeur Premium Var & Côte d'Azur"; };
+    return () => { document.title = "L'Ambassadeur des VTC — Chauffeur Premium Nord & Pas-de-Calais"; };
   }, [page]);
 
   const scrollToBooking = () => { window.location.href = '/'; setTimeout(() => document.getElementById('booking')?.scrollIntoView(), 300); };
@@ -191,7 +191,7 @@ export default function SeoLandingPage() {
             <ul className="space-y-2 text-sm text-noir-300">
               <li className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
-                <span>Fréjus, Var (83600) — Côte d'Azur</span>
+                <span>Calais, Pas-de-Calais (62100) — Nord</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-sapphire-400 flex-shrink-0" />
@@ -220,8 +220,8 @@ export default function SeoLandingPage() {
           </div>
           <div className="rounded-xl overflow-hidden w-full" style={{ height: 240 }}>
             <iframe
-              title="L'Ambassadeur des VTC — Fréjus, Var"
-              src="https://maps.google.com/maps?q=Frejus+83600+Var+France&t=&z=13&ie=UTF8&iwloc=&output=embed"
+              title="L'Ambassadeur des VTC — Calais, Pas-de-Calais"
+              src="https://maps.google.com/maps?q=Calais+62100+Pas-de-Calais+France&t=&z=13&ie=UTF8&iwloc=&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -238,7 +238,7 @@ export default function SeoLandingPage() {
       </main>
 
       <footer className="border-t border-white/5 py-8 text-center text-xs text-noir-600">
-        <p>© {new Date().getFullYear()} L'Ambassadeur des VTC — Fréjus, Var (83600) &amp; Côte d'Azur</p>
+        <p>© {new Date().getFullYear()} L'Ambassadeur des VTC — Calais, Pas-de-Calais (62100) &amp; Nord</p>
         <p className="mt-1">
           <a href={`tel:${PHONE}`} className="hover:text-noir-400 transition-colors">{PHONE}</a>
           {' · '}

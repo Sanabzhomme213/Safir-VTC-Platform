@@ -66,7 +66,7 @@ export const defaultSettings: AppSettings = {
   company_name: "L'Ambassadeur des VTC",
   company_email: 'contact@ambassadeur-vtc.fr',
   company_phone: '+33 6 33 82 83 94',
-  company_address: 'Toulon, Var, France',
+  company_address: 'Calais, Pas-de-Calais, France',
   pricing_per_km: 1.8,
   pricing_min: 25,
   pricing_round_trip_discount: 10,

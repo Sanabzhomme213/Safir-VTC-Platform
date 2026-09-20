@@ -426,7 +426,7 @@ export default function ReservationsPage() {
                   type="text"
                   value={form.departure}
                   onChange={e => setForm(f => ({ ...f, departure: e.target.value }))}
-                  placeholder="Ex: Gare de Toulon, Var"
+                  placeholder="Ex: Gare de Calais, Pas-de-Calais"
                   className="input-field"
                   required
                 />
@@ -437,7 +437,7 @@ export default function ReservationsPage() {
                   type="text"
                   value={form.arrival}
                   onChange={e => setForm(f => ({ ...f, arrival: e.target.value }))}
-                  placeholder="Ex: Aéroport Nice Côte d'Azur"
+                  placeholder="Ex: Aéroport de Lille-Lesquin"
                   className="input-field"
                   required
                 />

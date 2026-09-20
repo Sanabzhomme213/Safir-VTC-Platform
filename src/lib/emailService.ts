@@ -61,7 +61,7 @@ export function buildConfirmationEmail(params: {
         <span style="font-size:28px">🚗</span>
       </div>
       <h1 style="color:#fff;margin:0 0 4px;font-size:22px;font-weight:800;letter-spacing:-0.5px">${params.companyName}</h1>
-      <p style="color:rgba(255,255,255,0.65);margin:0;font-size:13px;letter-spacing:0.5px;text-transform:uppercase">Chauffeur Privé Premium • Var & Côte d'Azur</p>
+      <p style="color:rgba(255,255,255,0.65);margin:0;font-size:13px;letter-spacing:0.5px;text-transform:uppercase">Chauffeur Privé Premium • Nord & Pas-de-Calais</p>
     </div>
 
     <!-- BOOKING CONFIRMED BADGE -->
@@ -160,7 +160,7 @@ export function buildConfirmationEmail(params: {
 
     <!-- FOOTER -->
     <div style="text-align:center;padding:24px 16px 8px">
-      <p style="color:#333;font-size:11px;margin:0">${params.companyName} • Var &amp; Côte d'Azur • Disponible 24h/24</p>
+      <p style="color:#333;font-size:11px;margin:0">${params.companyName} • Nord &amp; Pas-de-Calais • Disponible 24h/24</p>
     </div>
 
   </div>

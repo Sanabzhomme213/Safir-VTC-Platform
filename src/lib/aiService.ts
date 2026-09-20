@@ -3,7 +3,7 @@
   content: string;
 }
 
-const SYSTEM_PROMPT = `Tu es l'assistant IA de L'Ambassadeur des VTC, une société de transport VTC premium dans le Var (Toulon, Hyères, Saint-Tropez) et la Côte d'Azur.
+const SYSTEM_PROMPT = `Tu es l'assistant IA de L'Ambassadeur des VTC, une société de transport VTC premium dans le Pas-de-Calais (Calais, Boulogne-sur-Mer, Le Touquet-Paris-Plage) et le Nord.
 Tu aides le gérant à :
 - Générer des devis et calculer des prix (tarif : 1,80€/km, min 25€, nuit +20%, aller-retour -10%)
 - Rédiger des pages SEO optimisées pour les villes desservies
@@ -57,7 +57,7 @@ function smartDemoResponse(userMessage: string): string {
       return `Je vais calculer un devis personnalisé.\n\nPour un tarif précis, merci de m'indiquer :\n\n• **Adresse de départ**\n• **Adresse d'arrivée**\n• **Date et heure**\n• **Nombre de passagers** et bagages\n• **Type** : aller simple, aller-retour ou mise à disposition\n\nTarif : **1,80€/km**, minimum **25€**.`;
 
     case 'seo': {
-      const villes = ['Toulon','Hyères','Saint-Tropez','Fréjus','Draguignan','Nice','Cannes'];
+      const villes = ['Calais','Boulogne-sur-Mer','Le Touquet-Paris-Plage','Berck-sur-Mer','Saint-Omer','Lille','Dunkerque'];
       const ville = villes.find(v => userMessage.toLowerCase().includes(v.toLowerCase())) ?? 'votre ville';
       return `**Page SEO pour "${ville}"**\n\n**Title :** Chauffeur VTC à ${ville} - Service Premium | L'Ambassadeur des VTC\n\n**H1 :** Votre Chauffeur Privé à ${ville}\n\n**Contenu :** L'Ambassadeur des VTC propose un service VTC haut de gamme à ${ville}. Nos chauffeurs assurent vos transferts aéroport, gare et déplacements professionnels.\n\n**FAQ :** Prix d'un VTC à ${ville} ? Disponible 24h/24 ? Comment réserver ?`;
     }
@@ -66,7 +66,7 @@ function smartDemoResponse(userMessage: string): string {
       return `**Modèle de réponse professionnelle**\n\n---\nBonjour [Prénom],\n\nMerci pour votre message. Nous sommes ravis de vous accompagner pour votre trajet.\n\nPour confirmer votre réservation, pourriez-vous nous préciser la date, l'heure et l'adresse de prise en charge ?\n\nCordialement,\n*L'équipe L'Ambassadeur des VTC*\n\n---`;
 
     case 'google':
-      return `**Publication Google Business**\n\n🚗 **L'Ambassadeur des VTC — Votre chauffeur privé sur la Côte d'Azur**\n\n✅ Ponctualité garantie\n✅ Véhicule premium climatisé\n✅ Suivi de vols en temps réel\n✅ Disponible 24h/24 — 7j/7\n\n📍 Toulon · Hyères · Saint-Tropez · Nice\n\n👉 Réservez en ligne → [lien]`;
+      return `**Publication Google Business**\n\n🚗 **L'Ambassadeur des VTC — Votre chauffeur privé dans le Nord et le Pas-de-Calais**\n\n✅ Ponctualité garantie\n✅ Véhicule premium climatisé\n✅ Suivi de vols en temps réel\n✅ Disponible 24h/24 — 7j/7\n\n📍 Calais · Boulogne-sur-Mer · Le Touquet-Paris-Plage · Lille\n\n👉 Réservez en ligne → [lien]`;
 
     case 'marketing':
       return `**Email marketing — Clients fidèles**\n\n**Objet :** 🎁 -10% sur votre prochain trajet\n\n---\nCher(e) [Prénom],\n\nCode promo exclusif : **FIDELE10** — 10% de réduction, valable 30 jours.\n\n[RÉSERVER]\n\n*L'équipe L'Ambassadeur des VTC*`;

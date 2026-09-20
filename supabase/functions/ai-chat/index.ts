@@ -25,7 +25,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Tu es l'assistant IA de Safir VTC, une société de transport VTC premium dans le Var (Toulon, Hyères, Saint-Tropez) et la Côte d'Azur.
+            content: `Tu es l'assistant IA de L'Ambassadeur des VTC, une société de transport VTC premium dans le Pas-de-Calais (Calais, Boulogne-sur-Mer, Le Touquet-Paris-Plage) et le Nord.
 Tu aides le gérant à :
 - Générer des devis et calculer des prix (tarif : 1,80€/km, min 25€, nuit +20%, aller-retour -10%)
 - Rédiger des pages SEO optimisées pour les villes desservies
