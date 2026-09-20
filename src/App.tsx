@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, Car, Users, FileText, Search, Bot, Mail, Globe,
-  Settings, Star, Plane, Gift, ChevronLeft, ChevronRight,
+  Settings, Plane, Gift, ChevronLeft, ChevronRight,
   Menu, X, Shield, ExternalLink, LogOut
 } from 'lucide-react';
 
@@ -16,7 +16,6 @@ import GoogleBusinessPage from './pages/GoogleBusiness';
 import AiPage from './pages/AiAssistant';
 import FlightsPage from './pages/Flights';
 import EmailsPage from './pages/Emails';
-import LoyaltyPage from './pages/Loyalty';
 import PromoPage from './pages/Promo';
 import ClientPortalPage from './pages/ClientPortal';
 import SettingsPage from './pages/Settings';
@@ -41,7 +40,6 @@ const navItems: NavItem[] = [
   { icon: Bot, label: 'IA Ambassadeur', path: '/admin/ai' },
   { icon: Plane, label: 'Suivi Vols', path: '/admin/flights' },
   { icon: Mail, label: 'Emails', path: '/admin/emails' },
-  { icon: Star, label: 'Fidélité', path: '/admin/loyalty' },
   { icon: Gift, label: 'Codes Promo', path: '/admin/promo' },
   { icon: Shield, label: 'Espace Client', path: '/admin/client-portal' },
   { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
@@ -203,7 +201,6 @@ function AdminLayout({ onLogout }: { onLogout: () => void }) {
               <Route path="ai" element={<AiPage />} />
               <Route path="flights" element={<FlightsPage />} />
               <Route path="emails" element={<EmailsPage />} />
-              <Route path="loyalty" element={<LoyaltyPage />} />
               <Route path="promo" element={<PromoPage />} />
               <Route path="client-portal" element={<ClientPortalPage />} />
               <Route path="settings" element={<SettingsPage />} />

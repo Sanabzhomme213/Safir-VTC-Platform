@@ -1,12 +1,12 @@
-﻿import type { Reservation, Client, Payment, SeoPage, EmailLog, ConciergeOffer, PromoCode, LoyaltyRule } from './supabase';
+﻿import type { Reservation, Client, Payment, SeoPage, EmailLog, ConciergeOffer, PromoCode } from './supabase';
 
 export const mockClients: Client[] = [
-  { id: '1', first_name: 'Jean', last_name: 'Dupont', email: 'jean.dupont@email.fr', phone: '+33 6 12 34 56 78', status: 'vip', total_spent: 2850, total_rides: 22, loyalty_points: 5700, notes: '', created_at: '2025-01-15T10:00:00Z', updated_at: '2025-06-01T10:00:00Z' },
-  { id: '2', first_name: 'Marie', last_name: 'Laurent', email: 'marie.laurent@email.fr', phone: '+33 6 98 76 54 32', status: 'loyal', total_spent: 680, total_rides: 7, loyalty_points: 1020, notes: '', created_at: '2025-03-01T10:00:00Z', updated_at: '2025-05-28T10:00:00Z' },
-  { id: '3', first_name: 'Pierre', last_name: 'Martin', email: 'pierre.martin@email.fr', phone: '+33 6 55 44 33 22', status: 'new', total_spent: 85, total_rides: 1, loyalty_points: 85, notes: '', created_at: '2025-06-01T10:00:00Z', updated_at: '2025-06-01T10:00:00Z' },
-  { id: '4', first_name: 'Sophie', last_name: 'Bernard', email: 'sophie.b@email.fr', phone: '+33 6 11 22 33 44', status: 'loyal', total_spent: 1200, total_rides: 12, loyalty_points: 1800, notes: 'Préfère les Mercedes', created_at: '2025-02-10T10:00:00Z', updated_at: '2025-05-30T10:00:00Z' },
-  { id: '5', first_name: 'Lucas', last_name: 'Moreau', email: 'lucas.moreau@email.fr', phone: '+33 6 77 88 99 00', status: 'vip', total_spent: 3500, total_rides: 30, loyalty_points: 7000, notes: 'Client corporate', created_at: '2024-11-01T10:00:00Z', updated_at: '2025-06-02T10:00:00Z' },
-  { id: '6', first_name: 'Emma', last_name: 'Petit', email: 'emma.petit@email.fr', phone: '+33 6 33 44 55 66', status: 'new', total_spent: 0, total_rides: 0, loyalty_points: 0, notes: '', created_at: '2025-06-03T10:00:00Z', updated_at: '2025-06-03T10:00:00Z' },
+  { id: '1', first_name: 'Jean', last_name: 'Dupont', email: 'jean.dupont@email.fr', phone: '+33 6 12 34 56 78', status: 'vip', total_spent: 2850, total_rides: 22, notes: '', created_at: '2025-01-15T10:00:00Z', updated_at: '2025-06-01T10:00:00Z' },
+  { id: '2', first_name: 'Marie', last_name: 'Laurent', email: 'marie.laurent@email.fr', phone: '+33 6 98 76 54 32', status: 'loyal', total_spent: 680, total_rides: 7, notes: '', created_at: '2025-03-01T10:00:00Z', updated_at: '2025-05-28T10:00:00Z' },
+  { id: '3', first_name: 'Pierre', last_name: 'Martin', email: 'pierre.martin@email.fr', phone: '+33 6 55 44 33 22', status: 'new', total_spent: 85, total_rides: 1, notes: '', created_at: '2025-06-01T10:00:00Z', updated_at: '2025-06-01T10:00:00Z' },
+  { id: '4', first_name: 'Sophie', last_name: 'Bernard', email: 'sophie.b@email.fr', phone: '+33 6 11 22 33 44', status: 'loyal', total_spent: 1200, total_rides: 12, notes: 'Préfère les Mercedes', created_at: '2025-02-10T10:00:00Z', updated_at: '2025-05-30T10:00:00Z' },
+  { id: '5', first_name: 'Lucas', last_name: 'Moreau', email: 'lucas.moreau@email.fr', phone: '+33 6 77 88 99 00', status: 'vip', total_spent: 3500, total_rides: 30, notes: 'Client corporate', created_at: '2024-11-01T10:00:00Z', updated_at: '2025-06-02T10:00:00Z' },
+  { id: '6', first_name: 'Emma', last_name: 'Petit', email: 'emma.petit@email.fr', phone: '+33 6 33 44 55 66', status: 'new', total_spent: 0, total_rides: 0, notes: '', created_at: '2025-06-03T10:00:00Z', updated_at: '2025-06-03T10:00:00Z' },
 ];
 
 export const mockReservations: Reservation[] = [
@@ -49,12 +49,6 @@ export const mockConciergeOffers: ConciergeOffer[] = [
   { id: 'c2', offer_type: 'restaurant', name: 'Le Jardin de la Tour', description: 'Restaurant gastronomique avec vue mer à Calais', partner_name: 'LaFourchette', affiliate_url: '#', commission_percent: 5, city: 'Calais', is_active: true, created_at: '2025-05-01T10:00:00Z' },
   { id: 'c3', offer_type: 'car_rental', name: 'Europcar Lille Aéroport', description: 'Location de voitures premium à l\'aéroport de Lille-Lesquin', partner_name: 'Europcar', affiliate_url: '#', commission_percent: 10, city: 'Lille', is_active: true, created_at: '2025-05-01T10:00:00Z' },
   { id: 'c4', offer_type: 'activity', name: 'Sortie en mer Côte d\'Opale', description: 'Croisière privée le long de la Côte d\'Opale', partner_name: 'GetYourGuide', affiliate_url: '#', commission_percent: 12, city: 'Le Touquet-Paris-Plage', is_active: true, created_at: '2025-05-01T10:00:00Z' },
-];
-
-export const mockLoyaltyRules: LoyaltyRule[] = [
-  { id: 'l1', name: 'Nouveau', min_rides: 0, min_spent: 0, discount_percent: 0, points_per_euro: 1, created_at: '2025-01-01T10:00:00Z' },
-  { id: 'l2', name: 'Fidèle', min_rides: 5, min_spent: 300, discount_percent: 5, points_per_euro: 1.5, created_at: '2025-01-01T10:00:00Z' },
-  { id: 'l3', name: 'VIP', min_rides: 15, min_spent: 1000, discount_percent: 10, points_per_euro: 2, created_at: '2025-01-01T10:00:00Z' },
 ];
 
 export const mockPromoCodes: PromoCode[] = [

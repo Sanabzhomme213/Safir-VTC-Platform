@@ -53,7 +53,7 @@ function ClientView() {
 
       <div className="p-6 space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="card text-center">
             <p className="text-2xl font-bold text-sapphire-400">{completedReservations.length}</p>
             <p className="text-xs text-noir-400 mt-1">Trajets</p>
@@ -61,10 +61,6 @@ function ClientView() {
           <div className="card text-center">
             <p className="text-2xl font-bold text-emerald-400">{formatCurrency(mockClients[0].total_spent)}</p>
             <p className="text-xs text-noir-400 mt-1">Total depense</p>
-          </div>
-          <div className="card text-center">
-            <p className="text-2xl font-bold text-amber-400">{mockClients[0].loyalty_points}</p>
-            <p className="text-xs text-noir-400 mt-1">Points fidelite</p>
           </div>
         </div>
 
@@ -153,7 +149,6 @@ function ClientView() {
             </div>
             <div className="flex items-center gap-4 pt-2 border-t border-white/5">
               <span className="badge-success">VIP</span>
-              <span className="text-sm text-noir-400">5 700 points fidelite</span>
             </div>
             <button className="btn-primary flex items-center gap-2 text-sm"><Edit2 size={14} /> Enregistrer</button>
           </div>

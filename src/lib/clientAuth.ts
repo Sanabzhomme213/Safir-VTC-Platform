@@ -89,7 +89,6 @@ export async function ensureClientRecord(session: ClientSession): Promise<void> 
       status: 'new',
       total_spent: 0,
       total_rides: 0,
-      loyalty_points: 0,
       notes: '',
     });
   }

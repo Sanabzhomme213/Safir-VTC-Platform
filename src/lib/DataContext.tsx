@@ -5,11 +5,11 @@
 import { supabase, generateBookingNumber } from './supabase';
 import type {
   Client, Reservation, Payment, SeoPage,
-  EmailLog, ConciergeOffer, LoyaltyRule, PromoCode
+  EmailLog, ConciergeOffer, PromoCode
 } from './supabase';
 import {
   mockClients, mockReservations, mockPayments, mockSeoPages,
-  mockEmailLogs, mockConciergeOffers, mockLoyaltyRules, mockPromoCodes
+  mockEmailLogs, mockConciergeOffers, mockPromoCodes
 } from './mockData';
 
 export { generateBookingNumber };
@@ -37,7 +37,6 @@ const store = {
   seoPages: devDemo ? [...mockSeoPages] : [],
   emailLogs: devDemo ? [...mockEmailLogs] : [],
   conciergeOffers: devDemo ? [...mockConciergeOffers] : [],
-  loyaltyRules: devDemo ? [...mockLoyaltyRules] : [],
   promoCodes: devDemo ? [...mockPromoCodes] : [],
 };
 
@@ -90,7 +89,6 @@ type DataContextValue = {
   seoPages: SeoPage[];
   emailLogs: EmailLog[];
   conciergeOffers: ConciergeOffer[];
-  loyaltyRules: LoyaltyRule[];
   promoCodes: PromoCode[];
   settings: AppSettings;
   loading: boolean;
@@ -110,8 +108,6 @@ type DataContextValue = {
   addPromoCode: (c: Omit<PromoCode, 'id' | 'created_at' | 'current_uses'>) => Promise<void>;
   updatePromoCode: (id: string, d: Partial<PromoCode>) => Promise<void>;
   deletePromoCode: (id: string) => Promise<void>;
-
-  updateLoyaltyRule: (id: string, d: Partial<LoyaltyRule>) => Promise<void>;
 
   addConciergeOffer: (o: Omit<ConciergeOffer, 'id' | 'created_at'>) => Promise<void>;
   updateConciergeOffer: (id: string, d: Partial<ConciergeOffer>) => Promise<void>;
@@ -142,7 +138,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [seoPages, setSeoPages] = useState<SeoPage[]>(store.seoPages);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>(store.emailLogs);
   const [conciergeOffers, setConciergeOffers] = useState<ConciergeOffer[]>(store.conciergeOffers);
-  const [loyaltyRules, setLoyaltyRules] = useState<LoyaltyRule[]>(store.loyaltyRules);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(store.promoCodes);
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
   const [loading, setLoading] = useState(false);
@@ -156,10 +151,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       supabase.from('seo_pages').select('*').order('created_at', { ascending: false }),
       supabase.from('email_logs').select('*').order('created_at', { ascending: false }),
       supabase.from('concierge_offers').select('*').order('created_at', { ascending: false }),
-      supabase.from('loyalty_rules').select('*').order('min_rides'),
       supabase.from('promo_codes').select('*').order('created_at', { ascending: false }),
       supabase.from('settings').select('*'),
-    ]).then(([c, r, s, e, co, lr, pc, st]) => {
+    ]).then(([c, r, s, e, co, pc, st]) => {
       if (c.error) console.error('[DataContext] clients:', c.error.message);
       if (r.error) console.error('[DataContext] reservations:', r.error.message);
       if (c.data !== null) setClients(c.data);
@@ -167,7 +161,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (s.data !== null) setSeoPages(s.data);
       if (e.data !== null) setEmailLogs(e.data);
       if (co.data !== null) setConciergeOffers(co.data);
-      if (lr.data !== null) setLoyaltyRules(lr.data);
       if (pc.data !== null) setPromoCodes(pc.data);
       if (st.data?.length) {
         const merged: Record<string, unknown> = {};
@@ -337,17 +330,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setPromoCodes(p => p.filter(c => c.id !== id));
   }, [connected]);
 
-  /* ── Loyalty Rules ───────────────────────────────────────── */
-  const updateLoyaltyRule = useCallback(async (id: string, d: Partial<LoyaltyRule>) => {
-    if (connected) {
-      const { error } = await supabase.from('loyalty_rules').update(d).eq('id', id);
-      if (error) throw error;
-    } else {
-      store.loyaltyRules = store.loyaltyRules.map(r => r.id === id ? { ...r, ...d } : r);
-    }
-    setLoyaltyRules(p => p.map(r => r.id === id ? { ...r, ...d } : r));
-  }, [connected]);
-
   /* ── Concierge Offers ────────────────────────────────────── */
   const addConciergeOffer = useCallback(async (o: Omit<ConciergeOffer, 'id' | 'created_at'>) => {
     const now = new Date().toISOString();
@@ -413,25 +395,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<DataContextValue>(() => ({
     clients, reservations, payments, seoPages, emailLogs,
-    conciergeOffers, loyaltyRules, promoCodes, settings,
+    conciergeOffers, promoCodes, settings,
     loading, supabaseConnected: connected,
     addClient, updateClient, deleteClient,
     addReservation, updateReservation, deleteReservation,
     saveSeoPage, deleteSeoPage,
     addPromoCode, updatePromoCode, deletePromoCode,
-    updateLoyaltyRule,
     addConciergeOffer, updateConciergeOffer, deleteConciergeOffer,
     addEmailLog,
     updateSettings,
   }), [
     clients, reservations, payments, seoPages, emailLogs,
-    conciergeOffers, loyaltyRules, promoCodes, settings,
+    conciergeOffers, promoCodes, settings,
     loading, connected,
     addClient, updateClient, deleteClient,
     addReservation, updateReservation, deleteReservation,
     saveSeoPage, deleteSeoPage,
     addPromoCode, updatePromoCode, deletePromoCode,
-    updateLoyaltyRule,
     addConciergeOffer, updateConciergeOffer, deleteConciergeOffer,
     addEmailLog,
     updateSettings,

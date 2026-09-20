@@ -78,7 +78,7 @@ export default function ClientLoginPage() {
 
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-white">Mon Espace Client</h1>
-            <p className="text-noir-400 text-sm mt-2">Gérez vos réservations et votre programme fidélité</p>
+            <p className="text-noir-400 text-sm mt-2">Gérez vos réservations en toute simplicité</p>
           </div>
 
           {/* Pending booking banner */}

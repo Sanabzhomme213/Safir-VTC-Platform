@@ -54,7 +54,6 @@ export default function ClientsPage() {
         status:     'new',
         total_spent: 0,
         total_rides: 0,
-        loyalty_points: 0,
         notes: form.notes,
       });
       setForm({ first_name: '', last_name: '', email: '', phone: '', notes: '' });
@@ -165,7 +164,7 @@ export default function ClientsPage() {
                 <p className="text-noir-400 truncate flex items-center gap-1.5"><Mail className="w-3 h-3" />{c.email || '—'}</p>
                 <p className="text-noir-400 flex items-center gap-1.5"><Phone className="w-3 h-3" />{c.phone || '—'}</p>
               </div>
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5 text-center">
+              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/5 text-center">
                 <div>
                   <p className="text-lg font-bold text-sapphire-400">{c.total_rides}</p>
                   <p className="text-xs text-noir-500 mt-0.5">Trajets</p>
@@ -173,10 +172,6 @@ export default function ClientsPage() {
                 <div>
                   <p className="text-lg font-bold text-emerald-400">{formatCurrency(c.total_spent)}</p>
                   <p className="text-xs text-noir-500 mt-0.5">Dépensé</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-amber-400">{c.loyalty_points}</p>
-                  <p className="text-xs text-noir-500 mt-0.5">Points</p>
                 </div>
               </div>
             </div>
@@ -281,7 +276,6 @@ export default function ClientsPage() {
                 {[
                   { label: 'Trajets totaux', val: selected.total_rides, color: 'text-sapphire-400' },
                   { label: 'Total dépensé', val: formatCurrency(selected.total_spent), color: 'text-emerald-400' },
-                  { label: 'Points fidélité', val: selected.loyalty_points, color: 'text-amber-400' },
                   { label: 'Trajets complétés', val: clientRides.filter(r => r.status === 'completed').length, color: 'text-purple-400' },
                 ].map(s => (
                   <div key={s.label} className="bg-noir-800/50 rounded-lg p-3 border border-white/5">

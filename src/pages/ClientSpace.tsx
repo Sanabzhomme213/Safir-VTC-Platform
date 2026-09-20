@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Car, Calendar, MapPin, CreditCard, Star, LogOut, User, Clock,
+  Car, Calendar, MapPin, Star, LogOut, User, Clock,
   CheckCircle, AlertCircle, ChevronRight, Phone, Mail, Home,
-  ArrowRight, Shield, Zap, Gift,
+  ArrowRight, Shield,
 } from 'lucide-react';
 import { NavLink, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -15,7 +15,7 @@ import { clientSignOut, ensureClientRecord } from '../lib/clientAuth';
 import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
 import { notifyReservationCreated } from '../lib/smsService';
 
-type Tab = 'home' | 'reservations' | 'profile' | 'loyalty';
+type Tab = 'home' | 'reservations' | 'profile';
 
 export default function ClientSpacePage() {
   const [session, setSession] = useState<{ id: string; email?: string; phone?: string } | null | 'loading'>('loading');
@@ -152,7 +152,6 @@ export default function ClientSpacePage() {
   const tabs = [
     { id: 'home' as Tab, label: 'Accueil', icon: Home },
     { id: 'reservations' as Tab, label: 'Courses', icon: Calendar },
-    { id: 'loyalty' as Tab, label: 'Fidélité', icon: Star },
     { id: 'profile' as Tab, label: 'Profil', icon: User },
   ];
 
@@ -201,7 +200,7 @@ export default function ClientSpacePage() {
               </div>
 
               {/* Stats row */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div className="glass rounded-2xl p-4 text-center border border-white/8">
                   <p className="text-2xl font-bold text-sapphire-400">{completedCount}</p>
                   <p className="text-[11px] text-noir-500 mt-1 uppercase tracking-wide">Trajets</p>
@@ -209,10 +208,6 @@ export default function ClientSpacePage() {
                 <div className="glass rounded-2xl p-4 text-center border border-white/8">
                   <p className="text-lg font-bold text-emerald-400">{formatCurrency(client?.total_spent ?? 0)}</p>
                   <p className="text-[11px] text-noir-500 mt-1 uppercase tracking-wide">Dépensé</p>
-                </div>
-                <div className="glass rounded-2xl p-4 text-center border border-amber-500/15">
-                  <p className="text-2xl font-bold text-amber-400">{client?.loyalty_points ?? 0}</p>
-                  <p className="text-[11px] text-noir-500 mt-1 uppercase tracking-wide">Points</p>
                 </div>
               </div>
 
@@ -253,7 +248,6 @@ export default function ClientSpacePage() {
                 {[
                   { icon: Phone, label: 'Appeler', action: () => window.open('tel:+33633828394') },
                   { icon: Mail, label: 'Email', action: () => window.open('mailto:contact@ambassadeur-vtc.fr') },
-                  { icon: Gift, label: 'Fidélité', action: () => setActiveTab('loyalty') },
                   { icon: Shield, label: 'Garanties', action: () => setActiveTab('profile') },
                 ].map(({ icon: Icon, label, action }) => (
                   <button key={label} onClick={action}
@@ -301,70 +295,6 @@ export default function ClientSpacePage() {
                   )}
                 </>
               )}
-            </div>
-          )}
-
-          {/* LOYALTY TAB */}
-          {activeTab === 'loyalty' && (
-            <div className="space-y-4 pb-2">
-              <h2 className="text-xl font-bold text-white pt-2">Programme fidélité</h2>
-
-              {/* Status card */}
-              <div className="rounded-2xl bg-gradient-to-br from-amber-600/20 to-amber-800/10 border border-amber-500/25 p-5">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center">
-                    <Star className="w-7 h-7 text-amber-400 fill-amber-400/30" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-white">{client?.loyalty_points ?? 0}</p>
-                    <p className="text-amber-400 text-sm">points fidélité</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <p className="text-amber-300 text-sm font-medium">
-                    Statut : {completedCount >= 15 ? '⭐ VIP' : completedCount >= 5 ? '🥈 Fidèle' : '🆕 Nouveau'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Tiers */}
-              <div className="glass rounded-2xl border border-white/8 overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/5">
-                  <p className="font-semibold text-white">Paliers de récompense</p>
-                </div>
-                {[
-                  { name: '🆕 Nouveau', rides: 0,  discount: '0%',  color: 'text-noir-300' },
-                  { name: '🥈 Fidèle',  rides: 5,  discount: '5%',  color: 'text-amber-300' },
-                  { name: '⭐ VIP',     rides: 15, discount: '10%', color: 'text-emerald-300' },
-                ].map(tier => {
-                  const active = completedCount >= tier.rides;
-                  const isCurrent = tier.rides === (completedCount >= 15 ? 15 : completedCount >= 5 ? 5 : 0);
-                  return (
-                    <div key={tier.name} className={`flex items-center justify-between px-5 py-4 border-b border-white/5 last:border-0 ${active ? '' : 'opacity-40'}`}>
-                      <div>
-                        <p className={`font-medium ${isCurrent ? 'text-white' : tier.color}`}>{tier.name}</p>
-                        <p className="text-xs text-noir-500 mt-0.5">dès {tier.rides} trajet{tier.rides > 1 ? 's' : ''}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-sm font-bold ${active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/5 text-noir-500'}`}>
-                          {tier.discount}
-                        </span>
-                        {isCurrent && <CheckCircle className="w-4 h-4 text-emerald-400" />}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="glass rounded-2xl p-4 border border-white/6">
-                <div className="flex items-start gap-3">
-                  <CreditCard className="w-4 h-4 text-sapphire-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-noir-400 leading-relaxed">
-                    <span className="text-white font-medium">1€ dépensé = 1 point.</span> Les points sont crédités automatiquement après chaque trajet terminé. La réduction s'applique sur votre prochain trajet.
-                  </p>
-                </div>
-              </div>
             </div>
           )}
 

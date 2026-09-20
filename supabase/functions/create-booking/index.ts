@@ -103,7 +103,6 @@ serve(async (req) => {
           status: 'new',
           total_spent: 0,
           total_rides: 0,
-          loyalty_points: 0,
           notes: '',
         }),
       });

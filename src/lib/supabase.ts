@@ -14,7 +14,6 @@ export type Client = {
   status: 'new' | 'loyal' | 'vip';
   total_spent: number;
   total_rides: number;
-  loyalty_points: number;
   notes: string;
   created_at: string;
   updated_at: string;
@@ -123,16 +122,6 @@ export type ConciergeOffer = {
   commission_percent: number;
   city: string;
   is_active: boolean;
-  created_at: string;
-};
-
-export type LoyaltyRule = {
-  id: string;
-  name: string;
-  min_rides: number;
-  min_spent: number;
-  discount_percent: number;
-  points_per_euro: number;
   created_at: string;
 };
 
