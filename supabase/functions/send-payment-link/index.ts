@@ -51,9 +51,10 @@ serve(async (req) => {
       'Content-Type': 'application/json',
     };
 
-    const { reservationId, type } = await req.json();
+    const { reservationId, type, link } = await req.json();
     if (!reservationId) throw new Error('reservationId requis');
     if (type !== 'deposit' && type !== 'balance') throw new Error('type doit être "deposit" ou "balance"');
+    if (!link || typeof link !== 'string' || !link.trim()) throw new Error('link requis (lien de paiement à relayer au client)');
 
     const getRes = await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${reservationId}&limit=1`, { headers });
     const rows = await getRes.json();
@@ -69,29 +70,20 @@ serve(async (req) => {
       ? reservation.deposit_amount
       : Math.round((reservation.total_price - reservation.deposit_amount) * 100) / 100;
 
-    const token = reservation.payment_token ?? crypto.randomUUID();
-    if (!reservation.payment_token) {
-      await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${reservationId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ payment_token: token }),
-      });
-    }
     await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${reservationId}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ payment_link_sent_at: new Date().toISOString() }),
     });
 
-    const siteUrl = (Deno.env.get('SITE_URL') ?? 'https://ambassadeur-des-vtc.fr').replace(/\/$/, '');
-    const link = `${siteUrl}/payer/${reservationId}?t=${token}&type=${type}`;
+    const paymentLink = link.trim();
     const companyName = Deno.env.get('COMPANY_NAME') ?? "L'Ambassadeur des VTC";
     const label = type === 'deposit' ? 'acompte' : 'solde';
 
     await Promise.all([
       sendSms(
         client.phone,
-        `${companyName} - Reglez votre ${label} (${amount}EUR) pour la resa ${reservation.booking_number} :\n${link}`
+        `${companyName} - Reglez votre ${label} (${amount}EUR) pour la resa ${reservation.booking_number} :\n${paymentLink}`
       ),
       sendEmail(
         client.email,
@@ -100,13 +92,13 @@ serve(async (req) => {
           <h2 style="margin:0 0 12px">${companyName}</h2>
           <p>Bonjour ${client.first_name || ''},</p>
           <p>Voici le lien sécurisé pour régler ${type === 'deposit' ? "l'acompte" : 'le solde'} de votre réservation <strong>${reservation.booking_number}</strong> :</p>
-          <p style="margin:20px 0"><a href="${link}" style="display:inline-block;background:#1a45f5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold">Payer ${amount}€</a></p>
-          <p style="color:#666;font-size:13px">Si le bouton ne fonctionne pas, copiez ce lien : ${link}</p>
+          <p style="margin:20px 0"><a href="${paymentLink}" style="display:inline-block;background:#1a45f5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold">Payer ${amount}€</a></p>
+          <p style="color:#666;font-size:13px">Si le bouton ne fonctionne pas, copiez ce lien : ${paymentLink}</p>
         </div>`
       ),
     ]);
 
-    return new Response(JSON.stringify({ ok: true, link }), {
+    return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   } catch (e) {

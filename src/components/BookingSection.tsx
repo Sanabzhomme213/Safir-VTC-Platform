@@ -10,10 +10,8 @@ import 'leaflet/dist/leaflet.css';
 import AddressAutocomplete, { type AddressResult } from './AddressAutocomplete';
 import { calculatePrice } from '../lib/distance';
 import { supabase } from '../lib/supabase';
-import type { Reservation, Client } from '../lib/supabase';
 import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
 import { sendSms } from '../lib/smsService';
-import PaymentModal from './PaymentModal';
 
 // Fix Vite bundler breaking default icon paths
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
@@ -105,9 +103,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
   const [contactErrors, setContactErrors] = useState<{ firstName?: string; phone?: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [bookingResult, setBookingResult] = useState<{ bookingNumber: string; isQuote: boolean; depositPaid: boolean } | null>(null);
-  const [pendingPayment, setPendingPayment] = useState<{ reservation: Reservation; client: Client } | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [bookingResult, setBookingResult] = useState<{ bookingNumber: string; isQuote: boolean } | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -257,42 +253,15 @@ export default function BookingSection({ onScrollRequest }: Props) {
         }
       } catch { /* confirmations are best-effort */ }
 
-      if (isQuote) {
-        setBookingResult({ bookingNumber: reservation.booking_number, isQuote: true, depositPaid: false });
-      } else {
-        // Reservation is created and secured regardless of payment — the client
-        // can pay the deposit right away, or wait for the payment link we send
-        // by SMS/email (our team is notified and can also send it manually).
-        setPendingPayment({ reservation, client });
-      }
+      // Reservation is created and secured regardless of payment — nothing is
+      // collected on the site itself. The admin sends a payment link (SumUp) by
+      // SMS/email once the booking is reviewed.
+      setBookingResult({ bookingNumber: reservation.booking_number, isQuote });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Une erreur est survenue. Réessayez ou appelez-nous directement.');
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleDepositPaid = async () => {
-    if (!pendingPayment) return;
-    try {
-      await supabase.functions.invoke('confirm-deposit', {
-        body: { reservationId: pendingPayment.reservation.id, amount: pendingPayment.reservation.deposit_amount },
-      });
-    } catch { /* the booking already exists — payment was captured by SumUp regardless */ }
-
-    try {
-      if (pendingPayment.client.phone) {
-        const settings = loadPublicSettings();
-        sendSms(
-          pendingPayment.client.phone,
-          `${settings.company_name || "L'Ambassadeur des VTC"} - Acompte de ${pendingPayment.reservation.deposit_amount}€ recu !\nVotre reservation ${pendingPayment.reservation.booking_number} est confirmee pour le ${pendingPayment.reservation.ride_date} a ${pendingPayment.reservation.ride_time}.\nMerci de votre confiance !`
-        );
-      }
-    } catch { /* best-effort */ }
-
-    setShowPaymentModal(false);
-    setBookingResult({ bookingNumber: pendingPayment.reservation.booking_number, isQuote: false, depositPaid: true });
-    setPendingPayment(null);
   };
 
   const resetBooking = () => {
@@ -303,8 +272,6 @@ export default function BookingSection({ onScrollRequest }: Props) {
     setContactErrors({});
     setBookingResult(null);
     setSubmitError('');
-    setPendingPayment(null);
-    setShowPaymentModal(false);
   };
 
   const typeLabel = form.type === 'one_way' ? 'Aller simple' : form.type === 'round_trip' ? 'Aller-retour' : 'Mise à disposition';
@@ -314,7 +281,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
       {/* LEFT PANEL */}
       <div className="bg-noir-950 p-5 sm:p-8 lg:p-10 flex flex-col order-1">
         {/* Step indicator */}
-        {!bookingResult && !pendingPayment && (
+        {!bookingResult && (
         <div className="flex items-center justify-center mb-8">
           {([1, 2, 3] as const).map((step, idx) => (
             <div key={step} className="flex items-center">
@@ -350,7 +317,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
             <p className="text-noir-500 text-xs mb-7 max-w-xs leading-relaxed">
               {bookingResult.isQuote
                 ? 'Vous allez recevoir votre devis par email et SMS.'
-                : 'Acompte réglé — vous allez recevoir un email et un SMS de confirmation avec tous les détails de votre trajet.'}
+                : "Vous allez recevoir un email et un SMS de confirmation. Notre équipe vous enverra ensuite un lien de paiement sécurisé pour régler l'acompte."}
             </p>
             <div className="w-full space-y-2.5">
               <button onClick={resetBooking} className="w-full btn-primary flex items-center justify-center gap-2 py-3">
@@ -363,35 +330,8 @@ export default function BookingSection({ onScrollRequest }: Props) {
           </div>
         )}
 
-        {/* AWAITING PAYMENT — reservation created and secured, deposit not yet paid */}
-        {!bookingResult && pendingPayment && (
-          <div key="awaiting-payment" className="flex-1 flex flex-col items-center justify-center text-center animate-slide-up py-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mb-5">
-              <CheckCircle className="w-8 h-8 text-emerald-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Réservation enregistrée !</h3>
-            <p className="text-noir-300 text-sm mb-1">
-              N° <span className="text-sapphire-300 font-mono font-semibold">{pendingPayment.reservation.booking_number}</span>
-            </p>
-            <p className="text-noir-500 text-xs mb-7 max-w-xs leading-relaxed">
-              Vous pouvez régler l'acompte de <strong className="text-white">{pendingPayment.reservation.deposit_amount}€</strong> tout de suite pour confirmer immédiatement, ou attendre le lien de paiement sécurisé que notre équipe vous enverra par SMS et email.
-            </p>
-            <div className="w-full space-y-2.5">
-              <button onClick={() => setShowPaymentModal(true)} className="w-full btn-primary flex items-center justify-center gap-2 py-3.5 text-base">
-                <Shield className="w-4 h-4" /> Payer l'acompte maintenant ({pendingPayment.reservation.deposit_amount}€)
-              </button>
-              <button onClick={resetBooking} className="w-full btn-secondary flex items-center justify-center gap-2 py-3">
-                Terminer — je paierai via le lien reçu
-              </button>
-              <a href={`tel:${(loadPublicSettings().company_phone) || '+33633828394'}`} className="block text-center text-xs text-noir-500 hover:text-sapphire-400 transition-colors py-1">
-                Ou réglez par téléphone →
-              </a>
-            </div>
-          </div>
-        )}
-
         {/* STEP 1 — Votre trajet */}
-        {!bookingResult && !pendingPayment && wizardStep === 1 && (
+        {!bookingResult && wizardStep === 1 && (
           <div key="step1" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Votre trajet</h3>
 
@@ -445,7 +385,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
         )}
 
         {/* STEP 2 — Quand ? */}
-        {!bookingResult && !pendingPayment && wizardStep === 2 && (
+        {!bookingResult && wizardStep === 2 && (
           <div key="step2" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Quand ?</h3>
 
@@ -545,7 +485,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
         )}
 
         {/* STEP 3 — Récapitulatif */}
-        {!bookingResult && !pendingPayment && wizardStep === 3 && (
+        {!bookingResult && wizardStep === 3 && (
           <div key="step3" className="flex-1 flex flex-col animate-slide-up">
             <h3 className="text-lg font-semibold text-white mb-5">Récapitulatif</h3>
 
@@ -670,7 +610,7 @@ export default function BookingSection({ onScrollRequest }: Props) {
             </div>
 
             <div className="mt-4 flex items-center justify-center gap-3 text-xs text-noir-500 flex-wrap">
-              <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Paiement sécurisé</span>
+              <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Lien de paiement sécurisé</span>
               <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Confirmation après acompte</span>
               <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Assistance 24/7</span>
             </div>
@@ -725,18 +665,6 @@ export default function BookingSection({ onScrollRequest }: Props) {
           </div>
         )}
       </div>
-
-      {/* Deposit payment — required to confirm the reservation */}
-      {showPaymentModal && pendingPayment && (
-        <PaymentModal
-          reservation={pendingPayment.reservation}
-          client={pendingPayment.client}
-          paymentType="deposit"
-          amount={pendingPayment.reservation.deposit_amount}
-          onSuccess={handleDepositPaid}
-          onClose={() => setShowPaymentModal(false)}
-        />
-      )}
     </div>
   );
 }

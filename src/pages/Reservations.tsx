@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, MapPin, Calendar, Clock, Users, Briefcase,
-  ChevronDown, Check, Plus, Loader2, Navigation, AlertCircle, CreditCard,
+  ChevronDown, Check, Plus, Loader2, Navigation, AlertCircle,
   Car, ArrowRight, Send,
 } from 'lucide-react';
 import {
@@ -10,7 +10,6 @@ import {
 } from '../lib/supabase';
 import { useData } from '../lib/DataContext';
 import { getRouteInfo, calculatePrice } from '../lib/distance';
-import PaymentModal from '../components/PaymentModal';
 import { notifyReservationCreated, notifyDepositPaid, notifyBalancePaid, notifyThankYou } from '../lib/smsService';
 
 type RideType = 'one_way' | 'round_trip' | 'disposal';
@@ -28,12 +27,8 @@ export default function ReservationsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const [paymentModal, setPaymentModal] = useState<{
-    reservation: Reservation;
-    type: 'deposit' | 'balance';
-    amount: number;
-  } | null>(null);
   const [sendingLinkId, setSendingLinkId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   // New reservation form
   const [form, setForm] = useState<FormState>({
@@ -173,11 +168,20 @@ export default function ReservationsPage() {
     }
   };
 
+  // Payment happens entirely off-site: the admin creates a payment link from
+  // their own SumUp account (or any other provider) and pastes it here — we
+  // just relay it to the client by SMS and email.
   const handleSendPaymentLink = async (r: Reservation, type: 'deposit' | 'balance') => {
+    const amount = type === 'deposit' ? r.deposit_amount : r.total_price - r.deposit_amount;
+    const link = window.prompt(
+      `Collez le lien de paiement (SumUp ou autre) pour ${type === 'deposit' ? "l'acompte" : 'le solde'} de ${formatCurrency(amount)} :`
+    );
+    if (!link || !link.trim()) return;
+
     setSendingLinkId(r.id);
     try {
       const { data, error } = await supabase.functions.invoke('send-payment-link', {
-        body: { reservationId: r.id, type },
+        body: { reservationId: r.id, type, link: link.trim() },
       });
       if (error || data?.error) throw new Error(error?.message ?? data?.error ?? 'Erreur');
       await updateReservation(r.id, { payment_link_sent_at: new Date().toISOString() });
@@ -189,17 +193,35 @@ export default function ReservationsPage() {
     }
   };
 
-  const handleStatusChange = async (id: string, status: Reservation['status']) => {
+  // Marking a reservation as paid after the admin confirms receipt on SumUp's
+  // side — routed through confirm-deposit/confirm-balance so the payment is
+  // logged in the `payments` table (used by the dashboard revenue stats),
+  // not just a bare status flip.
+  const handleStatusChange = async (r: Reservation, status: Reservation['status']) => {
     try {
-      await updateReservation(id, { status });
-      showToast('Statut mis à jour');
-      if (status === 'completed') {
-        const r = reservations.find(x => x.id === id);
-        const client = r ? clients.find(c => c.id === r.client_id) : undefined;
-        if (client) notifyThankYou(client, settings.company_name);
+      const client = clients.find(c => c.id === r.client_id);
+      if (status === 'deposit_paid' && r.status === 'pending') {
+        setConfirmingId(r.id);
+        const { data, error } = await supabase.functions.invoke('confirm-deposit', {
+          body: { reservationId: r.id, amount: r.deposit_amount },
+        });
+        if (error || data?.error) throw new Error(error?.message ?? data?.error ?? 'Erreur');
+        if (client) notifyDepositPaid(r, client, r.deposit_amount, settings.company_name);
+      } else if (status === 'confirmed' && r.status === 'deposit_paid') {
+        setConfirmingId(r.id);
+        const { data, error } = await supabase.functions.invoke('confirm-balance', {
+          body: { reservationId: r.id, amount: r.total_price - r.deposit_amount },
+        });
+        if (error || data?.error) throw new Error(error?.message ?? data?.error ?? 'Erreur');
+        if (client) notifyBalancePaid(r, client, settings.company_name);
       }
+      await updateReservation(r.id, { status });
+      showToast('Statut mis à jour');
+      if (status === 'completed' && client) notifyThankYou(client, settings.company_name);
     } catch {
       showToast('Erreur lors de la mise à jour', false);
+    } finally {
+      setConfirmingId(null);
     }
   };
 
@@ -363,42 +385,24 @@ export default function ReservationsPage() {
                     </div>
                     <div className="flex gap-2 flex-wrap mb-2">
                       {r.status === 'pending' && r.deposit_amount > 0 && (
-                        <>
-                          <button
-                            onClick={() => setPaymentModal({ reservation: r, type: 'deposit', amount: r.deposit_amount })}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-xs font-bold transition-colors shadow-lg shadow-sapphire-600/20"
-                          >
-                            <CreditCard className="w-3.5 h-3.5" />
-                            Encaisser acompte {formatCurrency(r.deposit_amount)}
-                          </button>
-                          <button
-                            onClick={() => handleSendPaymentLink(r, 'deposit')}
-                            disabled={sendingLinkId === r.id}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold transition-colors disabled:opacity-50"
-                          >
-                            {sendingLinkId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                            Envoyer lien de paiement
-                          </button>
-                        </>
+                        <button
+                          onClick={() => handleSendPaymentLink(r, 'deposit')}
+                          disabled={sendingLinkId === r.id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sapphire-600 hover:bg-sapphire-700 text-white text-xs font-bold transition-colors shadow-lg shadow-sapphire-600/20 disabled:opacity-50"
+                        >
+                          {sendingLinkId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                          Envoyer lien de paiement — acompte {formatCurrency(r.deposit_amount)}
+                        </button>
                       )}
                       {r.status === 'deposit_paid' && (
-                        <>
-                          <button
-                            onClick={() => setPaymentModal({ reservation: r, type: 'balance', amount: r.total_price - r.deposit_amount })}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-lg shadow-emerald-600/20"
-                          >
-                            <CreditCard className="w-3.5 h-3.5" />
-                            Encaisser solde {formatCurrency(r.total_price - r.deposit_amount)}
-                          </button>
-                          <button
-                            onClick={() => handleSendPaymentLink(r, 'balance')}
-                            disabled={sendingLinkId === r.id}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold transition-colors disabled:opacity-50"
-                          >
-                            {sendingLinkId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                            Envoyer lien de paiement
-                          </button>
-                        </>
+                        <button
+                          onClick={() => handleSendPaymentLink(r, 'balance')}
+                          disabled={sendingLinkId === r.id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-lg shadow-emerald-600/20 disabled:opacity-50"
+                        >
+                          {sendingLinkId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                          Envoyer lien de paiement — solde {formatCurrency(r.total_price - r.deposit_amount)}
+                        </button>
                       )}
                     </div>
                     {r.payment_link_sent_at && (
@@ -408,9 +412,9 @@ export default function ReservationsPage() {
                       {(['pending','deposit_paid','confirmed','completed','cancelled'] as const).map(s => (
                         <button
                           key={s}
-                          onClick={() => handleStatusChange(r.id, s)}
-                          disabled={r.status === s}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                          onClick={() => handleStatusChange(r, s)}
+                          disabled={r.status === s || confirmingId === r.id}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border disabled:opacity-50 ${
                             r.status === s
                               ? 'bg-sapphire-600/20 text-sapphire-300 border-sapphire-500/30 cursor-default'
                               : 'bg-white/5 text-noir-300 border-white/10 hover:bg-white/10'
@@ -637,32 +641,6 @@ export default function ReservationsPage() {
         </form>
       )}
 
-      {/* Payment Modal */}
-      {paymentModal && (
-        <PaymentModal
-          reservation={paymentModal.reservation}
-          client={clients.find(c => c.id === paymentModal.reservation.client_id) ?? null}
-          paymentType={paymentModal.type}
-          amount={paymentModal.amount}
-          onSuccess={async () => {
-            const newStatus = paymentModal.type === 'deposit' ? 'deposit_paid' : 'confirmed';
-            await updateReservation(paymentModal.reservation.id, { status: newStatus });
-            setPaymentModal(null);
-            showToast(`Paiement encaissé — réservation ${reservationStatusLabel[newStatus]}`);
-
-            // SMS automatique selon le type de paiement
-            const client = clients.find(c => c.id === paymentModal.reservation.client_id);
-            if (client) {
-              if (paymentModal.type === 'deposit') {
-                notifyDepositPaid(paymentModal.reservation, client, paymentModal.amount, settings.company_name);
-              } else {
-                notifyBalancePaid(paymentModal.reservation, client, settings.company_name);
-              }
-            }
-          }}
-          onClose={() => setPaymentModal(null)}
-        />
-      )}
     </div>
   );
 }

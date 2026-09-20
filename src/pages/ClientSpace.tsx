@@ -13,8 +13,7 @@ import {
 import type { Reservation, Client } from '../lib/supabase';
 import { clientSignOut, ensureClientRecord } from '../lib/clientAuth';
 import { sendEmail, buildConfirmationEmail } from '../lib/emailService';
-import { notifyReservationCreated, notifyDepositPaid } from '../lib/smsService';
-import PaymentModal from '../components/PaymentModal';
+import { notifyReservationCreated } from '../lib/smsService';
 
 type Tab = 'home' | 'reservations' | 'profile' | 'loyalty';
 
@@ -25,7 +24,6 @@ export default function ClientSpacePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [bookingCreated, setBookingCreated] = useState(false);
-  const [payModal, setPayModal] = useState<Reservation | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -245,7 +243,7 @@ export default function ClientSpacePage() {
                     <button onClick={() => setActiveTab('reservations')} className="text-xs text-sapphire-400">Tout voir</button>
                   </div>
                   <div className="space-y-3">
-                    {upcoming.slice(0, 2).map(r => <ReservationCard key={r.id} r={r} onPayNow={setPayModal} />)}
+                    {upcoming.slice(0, 2).map(r => <ReservationCard key={r.id} r={r} />)}
                   </div>
                 </div>
               )}
@@ -292,7 +290,7 @@ export default function ClientSpacePage() {
                   {upcoming.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-sapphire-400 uppercase tracking-widest mb-2">À venir · {upcoming.length}</p>
-                      <div className="space-y-3">{upcoming.map(r => <ReservationCard key={r.id} r={r} onPayNow={setPayModal} />)}</div>
+                      <div className="space-y-3">{upcoming.map(r => <ReservationCard key={r.id} r={r} />)}</div>
                     </div>
                   )}
                   {past.length > 0 && (
@@ -497,31 +495,11 @@ export default function ClientSpacePage() {
           })}
         </div>
       </div>
-
-      {payModal && client && (
-        <PaymentModal
-          reservation={payModal}
-          client={client}
-          paymentType="deposit"
-          amount={payModal.deposit_amount}
-          onSuccess={async () => {
-            try {
-              await supabase.functions.invoke('confirm-deposit', {
-                body: { reservationId: payModal.id, amount: payModal.deposit_amount },
-              });
-            } catch { /* payment was captured by SumUp regardless */ }
-            setReservations(prev => prev.map(r => r.id === payModal.id ? { ...r, status: 'deposit_paid' } : r));
-            notifyDepositPaid(payModal, client, payModal.deposit_amount, JSON.parse(localStorage.getItem('ambassadeur_settings') ?? '{}').company_name || "L'Ambassadeur des VTC");
-            setPayModal(null);
-          }}
-          onClose={() => setPayModal(null)}
-        />
-      )}
     </div>
   );
 }
 
-function ReservationCard({ r, past = false, onPayNow }: { r: Reservation; past?: boolean; onPayNow?: (r: Reservation) => void }) {
+function ReservationCard({ r, past = false }: { r: Reservation; past?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div
@@ -556,19 +534,9 @@ function ReservationCard({ r, past = false, onPayNow }: { r: Reservation; past?:
 
       {/* Status messages */}
       {r.status === 'pending' && r.deposit_amount > 0 && (
-        <div className="mx-4 mb-3 flex items-center justify-between gap-2 text-xs text-amber-300 bg-amber-500/10 rounded-xl px-3 py-2.5">
-          <span className="flex items-center gap-2">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            Acompte en attente : {formatCurrency(r.deposit_amount)}
-          </span>
-          {onPayNow && (
-            <button
-              onClick={e => { e.stopPropagation(); onPayNow(r); }}
-              className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-semibold transition-colors"
-            >
-              Payer
-            </button>
-          )}
+        <div className="mx-4 mb-3 flex items-center gap-2 text-xs text-amber-300 bg-amber-500/10 rounded-xl px-3 py-2.5">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          Acompte en attente : {formatCurrency(r.deposit_amount)} — un lien de paiement vous sera envoyé par SMS et email
         </div>
       )}
       {r.status === 'deposit_paid' && (
